@@ -1,0 +1,16 @@
+menu "App"
+
+    config APP_DISPLAY_HW_TEST_AT_BOOT
+        bool "Run RGB display hardware test at boot"
+        default n
+        help
+            Before LVGL starts, fill the screen red, green, blue (SPI/panel check).
+            Normal UI runs after the test.
+
+    config APP_DISPLAY_HW_TEST_HOLD_MS
+        int "HW test color hold time (ms)"
+        depends on APP_DISPLAY_HW_TEST_AT_BOOT
+        default 800
+        range 100 5000
+
+endmenu
