@@ -1,0 +1,11 @@
+{
+  "name": "lvgl_test-blockly",
+  "private": true,
+  "description": "Local Blockly editor for common/rules/rules.json",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "blockly": "10.4.3"
+  }
+}

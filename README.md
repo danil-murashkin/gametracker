@@ -9,54 +9,34 @@ UI — [PicoPixel](https://picopixel.io/) / [SquareLine](https://squareline.io/)
 На **ESP32** — прошивка **ESP-IDF**: Logic Engine (FSM) и HAL для реальной периферии.
 
 ```mermaid
-flowchart TB
-
-%% =======================
-%% SIMULATOR
-%% =======================
-subgraph S["Симулятор (ПК)"]
-    direction TB
-    s_lvgl["LVGL\n(SDL 240×320)"]
-    s_le["Logic Engine\n(FSM)"]
-    s_hal["HAL mock"]
-
-    s_lvgl --> s_le --> s_hal
-end
+flowchart LR
 
 %% =======================
 %% DESIGN
 %% =======================
 subgraph D["Design (ПК)"]
     direction TB
-    PP["PicoPixel / SquareLine"]
-    UI["ui/*.c"]
-    RJ["rules.json"]
-
-    PP --> UI
-    RJ
+    LE["LVGL editor"]
+    BE["Blockly editor"]
 end
 
 %% =======================
-%% ESP32
+%% RUNTIME
 %% =======================
-subgraph E["ESP32 (ESP-IDF)"]
-    direction TB
-    e_lvgl["LVGL\n(ST7789)"]
-    e_le["Logic Engine\n(FSM)"]
-    e_hal["HAL"]
-    e_hw["Периферия\nST7789 · EC11 · LoRa · GPS · NFC"]
+subgraph R["Runtime (ESP32 / симулятор)"]
+    direction LR
+    lvgl["LVGL\n(SDL 240×320 / ST7789)"]
+    le["Logic Engine\n(FSM)"]
+    hal["HAL\n(mock / периферия)"]
 
-    e_lvgl --> e_le --> e_hal --> e_hw
+    lvgl --> le --> hal
 end
 
 %% =======================
 %% CROSS LINKS
 %% =======================
-UI --> s_lvgl
-UI --> e_lvgl
-
-RJ --> s_le
-RJ --> e_le
+LE -->|"ui/*.c"| lvgl
+BE -->|"rules.json"| le
 ```
 
 

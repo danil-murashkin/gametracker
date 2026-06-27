@@ -1,49 +1,76 @@
-# Редакторы (внешние)
+# Редакторы
 
-Собственных редакторов в репозитории **нет** — только эта справка. UI и логику готовят во внешних инструментах, артефакты кладут в `common/`.
+Артефакты кладут в `common/` (UI → `common/ui/`, логика → `common/rules/rules.json`).
 
-## UI — LVGL
+## Локальный Blockly (FSM → rules.json)
 
-| Инструмент | Ссылка | Экспорт | Куда положить |
-|------------|--------|---------|---------------|
-| **PicoPixel** | [picopixel.io](https://picopixel.io/) | LVGL 8.x C | `common/ui/` |
-| **SquareLine Studio** | [squareline.io](https://squareline.io/) | LVGL 8.x C | `common/ui/` |
+```powershell
+cd editor/blockly
+.\start.ps1
+```
 
-### Как подключить
+http://localhost:8081 — офлайн, Blockly 10.x из `npm`.
 
-1. Создайте проект **240×320**, цвет **RGB565**, LVGL **8.3**.
-2. Экспортируйте сгенерированные `.c` / `.h`.
-3. Скопируйте в `common/ui/` (или `firmware/main/ui/`).
-4. Добавьте файлы в `firmware/main/CMakeLists.txt`.
-5. Вызовите `ui_*_init()` из `app_main.c` вместо текущего `ui_counter_init()`.
+См. [blockly/README.md](blockly/README.md).
 
-Проверка без железа: [simulator/README.md](../simulator/README.md).
+## Block Factory (свои блоки Blockly)
 
-## Логика — FSM (`rules.json`)
+```powershell
+cd editor/block-factory
+.\start.ps1
+```
+
+http://localhost:8082 — официальный **Blockly Developer Tools** (Block Factory) из blockly-samples.
+
+См. [block-factory/README.md](block-factory/README.md).
+
+## UI — LVGL (внешние)
+
+### Открытый исходный код
+
+| Инструмент | Лицензия | LVGL 8.3 | Локально |
+|------------|----------|----------|----------|
+| **[EEZ Studio](https://github.com/eez-open/studio)** | GPL-3.0 | да | десктоп, офлайн |
+| **[lvgl_editor](https://github.com/lvgl/lvgl_editor)** (LVGL Pro) | исходники есть, [коммерческая лицензия](https://pro.lvgl.io) | XML → C | десктоп |
+
+Сгенерированный C из EEZ Studio — в `common/ui/`. Для вашего стека (LVGL **8.3**) EEZ Studio — основной **open-source** вариант.
+
+### Закрытые (онлайн / десктоп)
+
+| Инструмент | Open source | Примечание |
+|------------|-------------|------------|
+| [PicoPixel](https://picopixel.io/) | нет | браузер, бесплатный тариф |
+| [SquareLine Studio](https://squareline.io/) | нет | десктоп, в основном LVGL 9 |
+
+### Подключение UI
+
+1. Проект **240×320**, **RGB565**, LVGL **8.3**
+2. Экспорт `.c` / `.h` → `common/ui/`
+3. Добавить в `firmware/main/CMakeLists.txt` и `common/common_sources.cmake`
+4. Вызвать `ui_*_init()` из `app_main.c`
+
+Проверка: [simulator/README.md](../simulator/README.md).
+
+## Логика — rules.json
 
 | Способ | Описание |
 |--------|----------|
-| **Вручную** | Редактировать `common/rules/rules.json` по образцу ниже |
-| **Blockly** | [developers.google.com/blockly](https://developers.google.com/blockly) — библиотека для визуального редактора; готового экспорта в наш формат нет, при необходимости пишется отдельный генератор |
-| **Любой JSON-редактор** | VS Code, [jsoneditoronline.org](https://jsoneditoronline.org/) и т.п. |
+| **Blockly (локально)** | `editor/blockly/` — экспорт FSM |
+| **Вручную** | `common/rules/rules.json` |
+| **JSON-редактор** | VS Code, [jsoneditoronline.org](https://jsoneditoronline.org/) |
 
-### Формат `rules.json`
+### Формат
 
-Схема — в [common/rules/rules.json](../common/rules/rules.json). Кратко:
+Схема — [common/rules/rules.json](../common/rules/rules.json):
 
 - `initial` — стартовое состояние
-- `states` — id → `{ "label", "color" }` (цвет UI в hex)
-- `transitions` — `{ "from", "event", "to" }`; `from: "*"` — из любого состояния
+- `states` — id → `{ "label", "color" }`
+- `transitions` — `{ "from", "event", "to" }`; `from: "*"` — из любого
 
-События HAL (примеры): `enc_cw`, `enc_ccw`, `enc_press`, `jumper_inc`, `jumper_dec`.
+События: `enc_cw`, `enc_ccw`, `enc_press`, `jumper_inc`, `jumper_dec`.
 
-После правки:
-
-- **Симулятор** — положить файл и передать путь аргументом (если собран с Logic Engine).
-- **ESP32** — пересобрать прошивку (`idf.py build flash`), если правила встроены в образ.
-
-## Полезные ссылки
+## Ссылки
 
 - [LVGL 8.3 docs](https://docs.lvgl.io/8.3/)
-- [LVGL PC simulator (upstream)](https://github.com/lvgl/lv_port_pc_vscode)
+- [Blockly](https://github.com/RaspberryPiFoundation/blockly) (Apache 2.0)
 - [ESP-IDF](https://docs.espressif.com/projects/esp-idf/)
