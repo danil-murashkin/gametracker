@@ -1,4 +1,4 @@
-# lvgl_test
+# gametracker
 
 ## Архитектура
 

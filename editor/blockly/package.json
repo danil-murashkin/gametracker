@@ -1,5 +1,5 @@
 {
-  "name": "lvgl_test-blockly",
+  "name": "gametracker-blockly",
   "private": true,
   "description": "Local Blockly editor for common/rules/rules.json",
   "scripts": {
