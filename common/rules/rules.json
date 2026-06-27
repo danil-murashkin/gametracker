@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "initial": "home",
+  "states": {
+    "home": {
+      "label": "Home",
+      "color": "#0066FF"
+    },
+    "warn": {
+      "label": "Warning",
+      "color": "#FF6600"
+    },
+    "ok": {
+      "label": "OK",
+      "color": "#00CC66"
+    }
+  },
+  "transitions": [
+    { "from": "home", "event": "enc_cw", "to": "warn" },
+    { "from": "warn", "event": "enc_cw", "to": "ok" },
+    { "from": "ok", "event": "enc_cw", "to": "home" },
+    { "from": "home", "event": "enc_ccw", "to": "ok" },
+    { "from": "warn", "event": "enc_ccw", "to": "home" },
+    { "from": "ok", "event": "enc_ccw", "to": "warn" },
+    { "from": "*", "event": "enc_press", "to": "home" }
+  ]
+}

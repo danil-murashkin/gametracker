@@ -1,5 +1,6 @@
 #include "hal_display.h"
-#include "ui.h"
+#include "hal_jumper.h"
+#include "app_counter.h"
 
 #include "esp_log.h"
 #include "nvs_flash.h"
@@ -14,9 +15,9 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
 
-    ESP_LOGI(TAG, "starting display bring-up");
-    //ESP_ERROR_CHECK(hal_display_panel_init()); ESP_ERROR_CHECK(hal_display_hw_test_rgb(800)); ESP_ERROR_CHECK(hal_display_lvgl_init());
     ESP_ERROR_CHECK(hal_display_init());
-    ui_init();
+    app_counter_init();
+    hal_jumper_init(app_counter_on_jumper, NULL);
+
     ESP_LOGI(TAG, "ready");
 }

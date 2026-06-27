@@ -2,7 +2,7 @@
 
 ## Архитектура
 
-UI — [PicoPixel](https://picopixel.io/) (export → LVGL C), логика — Blockly в браузере (`rules.json`).
+UI — [PicoPixel](https://picopixel.io/) / [SquareLine](https://squareline.io/) (export → LVGL C), логика — `rules.json` (вручную или внешние инструменты, см. [editor/README.md](editor/README.md)).
 
 На **ПК** — **симулятор** (LVGL + Logic Engine + HAL mock): те же `ui/*.c` и `rules.json`, разработка UI и бизнес-логики **без железа**.
 
@@ -28,13 +28,12 @@ end
 %% =======================
 subgraph D["Design (ПК)"]
     direction TB
-    PP["PicoPixel"]
+    PP["PicoPixel / SquareLine"]
     UI["ui/*.c"]
-    BL["Blockly"]
     RJ["rules.json"]
 
     PP --> UI
-    BL --> RJ
+    RJ
 end
 
 %% =======================
@@ -78,11 +77,29 @@ RJ --> e_le
 | LoRa / GPS / NFC | mock + ручные события | реальные драйверы |
 
 
-Структура репозитория: `simulator/` (PC), `editor/` (Blockly), `firmware/` (ESP-IDF).
+Структура репозитория: `common/` (код для всех платформ), `simulator/` (ПК), `editor/`, `firmware/` (ESP-IDF).
 
 ### Текущий этап
 
-Реализован минимальный **display bring-up**: HAL ST7789 + LVGL 8.3 + один квадрат в `ui/`. Logic Engine, симулятор и периферия — заготовки.
+**Демо архитектуры:** Blockly → `rules.json` → Logic Engine → common UI → HAL (mock в симуляторе, ST7789 на ESP32).
+
+Подробно: [docs/demo.md](docs/demo.md).
+
+## Симулятор и редакторы
+
+**Редакторы (внешние):** UI — [PicoPixel](https://picopixel.io/) или [SquareLine Studio](https://squareline.io/); логика — `common/rules/rules.json`. Подробно: [editor/README.md](editor/README.md).
+
+**Симулятор (LVGL + SDL):**
+
+```powershell
+cd simulator
+. .\activate-build.ps1
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+.\build\simulator.exe
+```
+
+См. [simulator/README.md](simulator/README.md) — если `cmake` не найден, нужен MinGW (`winget install BrechtSanders.WinLibs.POSIX.MSVCRT`).
 
 ## Сборка и прошивка
 
@@ -142,7 +159,7 @@ Windows: укажите COM-порт платы (Device Manager → Ports), на
 
 - **UI:** [LVGL](https://github.com/lvgl/lvgl) 8.3 — embedded + PC-симулятор (SDL)
 - **UI editor:** [PicoPixel](https://picopixel.io/) — design time
-- **Logic editor:** Blockly (браузер) → `rules.json`
+- **Logic:** `rules.json` (редактирование вручную или внешние инструменты — см. [editor/README.md](editor/README.md))
 - **LoRa:** [libdriver/llcc68](https://github.com/libdriver/llcc68) — драйвер для MCU (в симуляторе — mock)
 
 

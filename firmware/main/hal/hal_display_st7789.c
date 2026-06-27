@@ -1,5 +1,6 @@
 #include "hal_display.h"
 #include "hal_display_internal.h"
+#include "hal_pins.h"
 
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
@@ -11,16 +12,9 @@
 #include "esp_lvgl_port.h"
 #include "sdkconfig.h"
 
-#define DISP_PIN_BL   22
-#define DISP_PIN_RST  16
-#define DISP_PIN_DC   17
-#define DISP_PIN_CS    5
-#define DISP_PIN_SCK  18
-#define DISP_PIN_MOSI 23
-
-#define DISP_SPI_HOST      SPI2_HOST
-#define DISP_SPI_CLOCK_HZ  (20 * 1000 * 1000)
-#define DISP_DRAW_BUF_LINES 32
+#define DISP_SPI_HOST       SPI2_HOST
+#define DISP_SPI_CLOCK_HZ   (40 * 1000 * 1000)
+#define DISP_DRAW_BUF_LINES 64
 
 static const char *TAG = "hal_display";
 
@@ -31,14 +25,14 @@ static esp_lcd_panel_handle_t s_panel;
 static esp_err_t hal_display_backlight_init(void)
 {
     gpio_config_t cfg = {
-        .pin_bit_mask = 1ULL << DISP_PIN_BL,
+        .pin_bit_mask = 1ULL << HAL_PIN_DISP_BL,
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
     ESP_RETURN_ON_ERROR(gpio_config(&cfg), TAG, "backlight gpio config failed");
-    ESP_RETURN_ON_ERROR(gpio_set_level(DISP_PIN_BL, 1), TAG, "backlight on failed");
+    ESP_RETURN_ON_ERROR(gpio_set_level(HAL_PIN_DISP_BL, 1), TAG, "backlight on failed");
     return ESP_OK;
 }
 
@@ -56,9 +50,9 @@ esp_err_t hal_display_panel_init(void)
     const size_t max_transfer_sz = HAL_DISPLAY_HOR_RES * DISP_DRAW_BUF_LINES * sizeof(uint16_t);
 
     spi_bus_config_t bus_cfg = {
-        .mosi_io_num = DISP_PIN_MOSI,
+        .mosi_io_num = HAL_PIN_DISP_MOSI,
         .miso_io_num = -1,
-        .sclk_io_num = DISP_PIN_SCK,
+        .sclk_io_num = HAL_PIN_DISP_SCK,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = max_transfer_sz,
@@ -67,11 +61,11 @@ esp_err_t hal_display_panel_init(void)
                         "spi bus init failed");
 
     esp_lcd_panel_io_spi_config_t io_cfg = {
-        .cs_gpio_num = DISP_PIN_CS,
-        .dc_gpio_num = DISP_PIN_DC,
+        .cs_gpio_num = HAL_PIN_DISP_CS,
+        .dc_gpio_num = HAL_PIN_DISP_DC,
         .spi_mode = 0,
         .pclk_hz = DISP_SPI_CLOCK_HZ,
-        .trans_queue_depth = 10,
+        .trans_queue_depth = 20,
         .lcd_cmd_bits = 8,
         .lcd_param_bits = 8,
     };
@@ -80,7 +74,7 @@ esp_err_t hal_display_panel_init(void)
         "panel io init failed");
 
     esp_lcd_panel_dev_config_t panel_cfg = {
-        .reset_gpio_num = DISP_PIN_RST,
+        .reset_gpio_num = HAL_PIN_DISP_RST,
         .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
         .bits_per_pixel = 16,
     };
@@ -89,12 +83,9 @@ esp_err_t hal_display_panel_init(void)
 
     ESP_RETURN_ON_ERROR(esp_lcd_panel_reset(s_panel), TAG, "panel reset failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_init(s_panel), TAG, "panel init cmd failed");
-
-    // ST7789 240x320: invert on, gap 0,0
     ESP_RETURN_ON_ERROR(esp_lcd_panel_invert_color(s_panel, true), TAG, "panel invert failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_set_gap(s_panel, 0, 0), TAG, "panel gap failed");
     ESP_RETURN_ON_ERROR(esp_lcd_panel_disp_on_off(s_panel, true), TAG, "panel on failed");
-
     ESP_RETURN_ON_ERROR(hal_display_backlight_init(), TAG, "backlight init failed");
 
 #if CONFIG_APP_DISPLAY_HW_TEST_AT_BOOT
@@ -102,7 +93,8 @@ esp_err_t hal_display_panel_init(void)
                         "hw test failed");
 #endif
 
-    ESP_LOGI(TAG, "panel init ok, %dx%d", HAL_DISPLAY_HOR_RES, HAL_DISPLAY_VER_RES);
+    ESP_LOGI(TAG, "panel ok %dx%d spi=%dMHz buf=%d lines", HAL_DISPLAY_HOR_RES,
+             HAL_DISPLAY_VER_RES, DISP_SPI_CLOCK_HZ / 1000000, DISP_DRAW_BUF_LINES);
     return ESP_OK;
 }
 
@@ -115,14 +107,17 @@ esp_err_t hal_display_lvgl_init(void)
         return ESP_ERR_INVALID_STATE;
     }
 
-    const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_cfg.task_priority = 6;
+    lvgl_cfg.timer_period_ms = 5;
+    lvgl_cfg.task_max_sleep_ms = 50;
     ESP_RETURN_ON_ERROR(lvgl_port_init(&lvgl_cfg), TAG, "lvgl port init failed");
 
     const lvgl_port_display_cfg_t disp_cfg = {
         .io_handle = s_io,
         .panel_handle = s_panel,
         .buffer_size = HAL_DISPLAY_HOR_RES * DISP_DRAW_BUF_LINES,
-        .double_buffer = false,
+        .double_buffer = true,
         .hres = HAL_DISPLAY_HOR_RES,
         .vres = HAL_DISPLAY_VER_RES,
         .monochrome = false,
@@ -145,7 +140,7 @@ esp_err_t hal_display_lvgl_init(void)
         return ESP_FAIL;
     }
 
-    ESP_LOGI(TAG, "lvgl init ok");
+    ESP_LOGI(TAG, "lvgl ok (double buf)");
     return ESP_OK;
 }
 

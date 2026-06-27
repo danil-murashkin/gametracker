@@ -13,8 +13,19 @@
 После прошивки на экране:
 
 - тёмный фон;
-- один синий квадрат 80×80 px по центру;
+- синий квадрат по центру, **белые цифры** — счётчик;
 - подсветка включена (GPIO 22).
+
+### Счётчик (замыкание GPIO)
+
+GPIO **32** — общий «минус» (в прошивке держится LOW).
+
+| Действие | Замыкание |
+|----------|-----------|
+| **+1** | GPIO **34** ↔ **35** (или 34 ↔ 32) |
+| **−1** | GPIO **35** ↔ **32** |
+
+GPIO 34 и 35 — только входы; без контакта с GPIO 32 пара 34–35 не определяется.
 
 В UART monitor (115200):
 
@@ -43,9 +54,12 @@ I (xxx) app_main: ready
 Стартовые значения в `hal_display_st7789.c`:
 
 ```c
+.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
 esp_lcd_panel_invert_color(panel_handle, true);
 esp_lcd_panel_set_gap(panel_handle, 0, 0);
 ```
+
+В `sdkconfig.defaults`: `CONFIG_LV_COLOR_16_SWAP=y`.
 
 ### Смещение / обрезка изображения
 
@@ -59,9 +73,21 @@ esp_lcd_panel_set_gap(panel_handle, 0, 0);
 
 ### Неверные цвета
 
-1. `esp_lcd_panel_invert_color()` — переключить `true` / `false` (сейчас `true`)
-2. `CONFIG_LV_COLOR_16_SWAP` — по умолчанию выключено; включить, если цвета «перепутаны» по байтам
-3. В panel IO: `rgb_ele_order` — `LCD_RGB_ELEMENT_ORDER_RGB` vs `BGR`
+**Проверенная комбинация для этого модуля (LOLIN32 Lite + ST7789V-IPS 2.4"):**
+
+| Параметр | Значение |
+|----------|----------|
+| `rgb_ele_order` | `LCD_RGB_ELEMENT_ORDER_RGB` |
+| `CONFIG_LV_COLOR_16_SWAP` | `y` (в `sdkconfig` / `sdkconfig.defaults`) |
+| `esp_lcd_panel_invert_color()` | `true` |
+
+Симптомы при других настройках: зелёный квадрат / фиолетовый фон (без swap), оранжевый квадрат (BGR + swap).
+
+Если цвета снова «поплыли»:
+
+1. `esp_lcd_panel_invert_color()` — переключить `true` / `false`
+2. `CONFIG_LV_COLOR_16_SWAP` — вкл./выкл.
+3. `rgb_ele_order` — `RGB` vs `BGR`
 
 ### Чёрный экран
 
