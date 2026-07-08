@@ -1,0 +1,385 @@
+// Logic Node Definitions - All available node types
+
+import type { LogicNodeDefinition } from './types';
+
+// Color scheme for node categories
+export const NODE_COLORS = {
+  trigger: '#4CAF50',   // Green
+  condition: '#FFC107', // Yellow/Amber
+  action: '#2196F3',    // Blue
+  data: '#9C27B0',      // Purple
+  custom: '#607D8B',    // Gray
+};
+
+// All node definitions
+export const NODE_DEFINITIONS: LogicNodeDefinition[] = [
+  // ============ TRIGGER NODES (Green) ============
+  {
+    type: 'trigger',
+    subType: 'event_trigger',
+    label: 'Event trigger',
+    description: 'Receive component events',
+    icon: '⚡',
+    color: NODE_COLORS.trigger,
+    defaultParams: {
+      eventType: 'LV_EVENT_CLICKED',
+    },
+    inputs: [],
+    outputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Event target', type: 'any' },
+    ],
+  },
+  {
+    type: 'trigger',
+    subType: 'timer_trigger',
+    label: 'Timer trigger',
+    description: 'Delayed or periodic',
+    icon: '⏱️',
+    color: NODE_COLORS.trigger,
+    defaultParams: {
+      mode: 'delay', // 'delay' | 'interval'
+      duration: 1000, // ms
+    },
+    inputs: [
+      { name: 'Start', type: 'execution' },
+    ],
+    outputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Count', type: 'int' },
+    ],
+  },
+
+  // ============ CONDITION NODES (Yellow) ============
+  {
+    type: 'condition',
+    subType: 'if_else',
+    label: 'If/Else',
+    description: 'Conditional branch',
+    icon: '🔀',
+    color: NODE_COLORS.condition,
+    defaultParams: {},
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Condition', type: 'bool' },
+    ],
+    outputs: [
+      { name: 'True', type: 'execution' },
+      { name: 'False', type: 'execution' },
+    ],
+  },
+  {
+    type: 'condition',
+    subType: 'switch',
+    label: 'Switch',
+    description: 'Multi-branch',
+    icon: '🔃',
+    color: NODE_COLORS.condition,
+    defaultParams: {
+      cases: [0, 1, 2],
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Value', type: 'int' },
+    ],
+    outputs: [
+      { name: 'Case 0', type: 'execution' },
+      { name: 'Case 1', type: 'execution' },
+      { name: 'Case 2', type: 'execution' },
+      { name: 'Default', type: 'execution' },
+    ],
+  },
+  {
+    type: 'condition',
+    subType: 'compare',
+    label: 'Compare',
+    description: 'Compare two values',
+    icon: '⚖️',
+    color: NODE_COLORS.condition,
+    defaultParams: {
+      operator: '==',
+    },
+    inputs: [
+      { name: 'A', type: 'any' },
+      { name: 'B', type: 'any' },
+    ],
+    outputs: [
+      { name: 'Result', type: 'bool' },
+    ],
+  },
+  {
+    type: 'condition',
+    subType: 'logic_op',
+    label: 'Logic',
+    description: 'AND, OR, NOT',
+    icon: '🔗',
+    color: NODE_COLORS.condition,
+    defaultParams: {
+      operator: 'AND',
+    },
+    inputs: [
+      { name: 'A', type: 'bool' },
+      { name: 'B', type: 'bool' },
+    ],
+    outputs: [
+      { name: 'Result', type: 'bool' },
+    ],
+  },
+
+  // ============ ACTION NODES (Blue) ============
+  {
+    type: 'action',
+    subType: 'set_property',
+    label: 'Set property',
+    description: 'Modify component property',
+    icon: '🎨',
+    color: NODE_COLORS.action,
+    defaultParams: {
+      targetComponent: '',
+      property: '',
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Value', type: 'any' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+    ],
+  },
+  {
+    type: 'action',
+    subType: 'navigate_page',
+    label: 'Target page',
+    description: 'Switch to page',
+    icon: '📄',
+    color: NODE_COLORS.action,
+    defaultParams: {
+      targetPage: '',
+      animation: 'none',
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+    ],
+  },
+  {
+    type: 'action',
+    subType: 'show_hide',
+    label: 'Show/hide',
+    description: 'Control component visibility',
+    icon: '👁️',
+    color: NODE_COLORS.action,
+    defaultParams: {
+      targetComponent: '',
+      action: 'toggle', // 'show' | 'hide' | 'toggle'
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+    ],
+  },
+  {
+    type: 'action',
+    subType: 'set_text',
+    label: 'Set text',
+    description: 'Modify text',
+    icon: '📝',
+    color: NODE_COLORS.action,
+    defaultParams: {
+      targetComponent: '',
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Text', type: 'string' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+    ],
+  },
+  {
+    type: 'action',
+    subType: 'set_value',
+    label: 'Set value',
+    description: 'Modify numeric property',
+    icon: '🔢',
+    color: NODE_COLORS.action,
+    defaultParams: {
+      targetComponent: '',
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Value', type: 'int' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+    ],
+  },
+  {
+    type: 'action',
+    subType: 'call_function',
+    label: 'Call function',
+    description: 'Call custom C function',
+    icon: '📞',
+    color: NODE_COLORS.action,
+    defaultParams: {
+      functionName: '',
+      arguments: [],
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Param 1', type: 'any' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+      { name: 'Return value', type: 'any' },
+    ],
+  },
+  {
+    type: 'action',
+    subType: 'delay',
+    label: 'Delay',
+    description: 'Wait',
+    icon: '⏳',
+    color: NODE_COLORS.action,
+    defaultParams: {
+      duration: 1000, // ms
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+    ],
+  },
+
+  // ============ DATA NODES (Purple) ============
+  {
+    type: 'data',
+    subType: 'var_read',
+    label: 'Read variable',
+    description: 'Read variable (incl. hardware: value_1, value_2)',
+    icon: '📖',
+    color: NODE_COLORS.data,
+    defaultParams: {
+      variableId: '',
+    },
+    inputs: [],
+    outputs: [
+      { name: 'Value', type: 'any' },
+    ],
+  },
+  {
+    type: 'data',
+    subType: 'var_write',
+    label: 'Write variable',
+    description: 'Set variable',
+    icon: '✏️',
+    color: NODE_COLORS.data,
+    defaultParams: {
+      variableId: '',
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Value', type: 'any' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+    ],
+  },
+  {
+    type: 'data',
+    subType: 'math_op',
+    label: 'Math',
+    description: 'Arithmetic',
+    icon: '🧮',
+    color: NODE_COLORS.data,
+    defaultParams: {
+      operator: '+',
+    },
+    inputs: [
+      { name: 'A', type: 'float' },
+      { name: 'B', type: 'float' },
+    ],
+    outputs: [
+      { name: 'Result', type: 'float' },
+    ],
+  },
+  {
+    type: 'data',
+    subType: 'string_op',
+    label: 'String ops',
+    description: 'Concat, format',
+    icon: '🔤',
+    color: NODE_COLORS.data,
+    defaultParams: {
+      operation: 'concat',
+    },
+    inputs: [
+      { name: 'A', type: 'string' },
+      { name: 'B', type: 'string' },
+    ],
+    outputs: [
+      { name: 'Result', type: 'string' },
+    ],
+  },
+  {
+    type: 'data',
+    subType: 'get_property',
+    label: 'Get property',
+    description: 'Read component property',
+    icon: '🔍',
+    color: NODE_COLORS.data,
+    defaultParams: {
+      targetComponent: '',
+      property: '',
+    },
+    inputs: [],
+    outputs: [
+      { name: 'Value', type: 'any' },
+    ],
+  },
+
+  // ============ CUSTOM NODES (Gray) ============
+  {
+    type: 'custom',
+    subType: 'c_code_block',
+    label: 'C Code block',
+    description: 'Embed custom C code',
+    icon: '💻',
+    color: NODE_COLORS.custom,
+    defaultParams: {
+      code: '// Custom code\n',
+    },
+    inputs: [
+      { name: 'Execute', type: 'execution' },
+      { name: 'Input 1', type: 'any' },
+    ],
+    outputs: [
+      { name: 'Done', type: 'execution' },
+      { name: 'Output 1', type: 'any' },
+    ],
+  },
+];
+
+// Get node definition by subType
+export function getNodeDefinition(subType: string): LogicNodeDefinition | undefined {
+  return NODE_DEFINITIONS.find(def => def.subType === subType);
+}
+
+// Get nodes by category
+export function getNodesByCategory(category: string): LogicNodeDefinition[] {
+  return NODE_DEFINITIONS.filter(def => def.type === category);
+}
+
+// Node categories for palette
+export const NODE_CATEGORIES = [
+  { id: 'trigger', name: 'Trigger', icon: '⚡', color: NODE_COLORS.trigger },
+  { id: 'condition', name: 'Condition', icon: '🔀', color: NODE_COLORS.condition },
+  { id: 'action', name: 'Actions', icon: '🎬', color: NODE_COLORS.action },
+  { id: 'data', name: 'Data', icon: '📊', color: NODE_COLORS.data },
+  { id: 'custom', name: 'Custom', icon: '💻', color: NODE_COLORS.custom },
+];

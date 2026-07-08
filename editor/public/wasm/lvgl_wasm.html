@@ -1,0 +1,295 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      #overlay img {
+        position: absolute;
+        display: block;
+        image-rendering: auto;
+      }
+      #overlay .bar-wrap {
+        position: absolute;
+        pointer-events: none;
+        box-sizing: border-box;
+      }
+      #overlay .bar {
+        width: 100%;
+        height: 100%;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      #overlay .bar__fill {
+        height: 100%;
+        width: 0%;
+      }
+      #overlay .label {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: pre;
+        pointer-events: none;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 400;
+        line-height: 1.2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+      <div id="overlay"></div>
+    </div>
+
+    <script>
+      const overlayEl = document.getElementById('overlay');
+      const canvasEl = document.getElementById('canvas');
+      let lastCanvasW = 0;
+      let lastCanvasH = 0;
+
+      /** @type {{ images: Record<string, string> }} */
+      let assets = { images: {} };
+      let lastUiJson = null;
+      /** @type {Map<string, { type: string, el: HTMLElement, fillEl?: HTMLElement }>} */
+      const overlayNodes = new Map();
+
+      function clearOverlay() {
+        overlayNodes.clear();
+        while (overlayEl.firstChild) overlayEl.removeChild(overlayEl.firstChild);
+      }
+
+      function isOverlayHidden(comp) {
+        if (comp?.props?.__overlayHidden !== undefined) {
+          return !!comp.props.__overlayHidden;
+        }
+        return !!(comp?.flags && comp.flags.hidden);
+      }
+
+      function applyCanvasSize(w, h) {
+        if (!(w > 0 && h > 0)) return;
+        // Setting canvas width/height clears the framebuffer — only do it when size changes.
+        if (w === lastCanvasW && h === lastCanvasH) return;
+        lastCanvasW = w;
+        lastCanvasH = h;
+        canvasEl.width = w;
+        canvasEl.height = h;
+      }
+
+      function setBox(el, comp) {
+        el.style.left = `${comp.x || 0}px`;
+        el.style.top = `${comp.y || 0}px`;
+        el.style.width = `${comp.width || 0}px`;
+        el.style.height = `${comp.height || 0}px`;
+      }
+
+      function renderOverlays(ui) {
+        if (!ui || !Array.isArray(ui.components)) return;
+
+        const activeIds = new Set();
+
+        for (const comp of ui.components) {
+          if (!comp || !comp.id) continue;
+          const id = comp.id;
+          activeIds.add(id);
+
+          const hidden = isOverlayHidden(comp);
+          let node = overlayNodes.get(id);
+
+          if (comp.type === 'label') {
+            const text = comp?.props?.__overlayText ?? comp?.props?.text;
+            if (text === undefined || text === null || text === '') {
+              if (node) node.el.style.display = 'none';
+              continue;
+            }
+
+            if (!node) {
+              const el = document.createElement('div');
+              el.className = 'label';
+              overlayEl.appendChild(el);
+              node = { type: 'label', el };
+              overlayNodes.set(id, node);
+            }
+
+            node.el.textContent = String(text);
+            setBox(node.el, comp);
+            const color = comp?.styles?.default?.textColor;
+            if (color) node.el.style.color = color;
+            node.el.style.fontSize = `${Number(comp?.props?.fontSize || 14)}px`;
+            const textAlign = comp?.props?.textAlign || 'center';
+            node.el.style.justifyContent =
+              textAlign === 'right' ? 'flex-end' : textAlign === 'left' ? 'flex-start' : 'center';
+            node.el.style.display = hidden ? 'none' : 'flex';
+            continue;
+          }
+
+          if (comp.type === 'img') {
+            const srcKey = comp?.props?.src;
+            if (!srcKey) {
+              if (node) node.el.style.display = 'none';
+              continue;
+            }
+            const dataUrl = assets.images[srcKey];
+            if (!dataUrl) {
+              if (node) node.el.style.display = 'none';
+              continue;
+            }
+
+            if (!node) {
+              const el = document.createElement('img');
+              overlayEl.appendChild(el);
+              node = { type: 'img', el };
+              overlayNodes.set(id, node);
+            }
+
+            // Reuse element — don't recreate on every logic tick (images need time to decode)
+            if (node.el.src !== dataUrl) {
+              node.el.src = dataUrl;
+            }
+            setBox(node.el, comp);
+            node.el.style.display = hidden ? 'none' : 'block';
+            continue;
+          }
+
+          if (comp.type === 'bar') {
+            const trackColor = comp?.styles?.default?.bgColor || '#333333';
+            const indicatorColor = comp?.styles?.default?.indicatorColor || '#2196f3';
+            const radius = Number(comp?.styles?.default?.borderRadius || 0);
+            const outlineWidth = Number(comp?.styles?.default?.outlineWidth || 0);
+            const outlineColor = comp?.styles?.default?.outlineColor;
+            const outlinePad = Number(comp?.styles?.default?.outlinePad || 0);
+
+            if (!node) {
+              const wrap = document.createElement('div');
+              wrap.className = 'bar-wrap';
+              const bar = document.createElement('div');
+              bar.className = 'bar';
+              const fill = document.createElement('div');
+              fill.className = 'bar__fill';
+              bar.appendChild(fill);
+              wrap.appendChild(bar);
+              overlayEl.appendChild(wrap);
+              node = { type: 'bar', el: wrap, barEl: bar, fillEl: fill };
+              overlayNodes.set(id, node);
+            }
+
+            const mn = Number(comp?.props?.min ?? 0);
+            const mx = Number(comp?.props?.max ?? 100);
+            const val = Number(comp?.props?.value ?? 50);
+            const progress = mx !== mn ? Math.max(0, Math.min(1, (val - mn) / (mx - mn))) : 0;
+
+            setBox(node.el, comp);
+            node.el.style.display = hidden ? 'none' : 'block';
+
+            if (outlineWidth > 0 && outlineColor) {
+              node.el.style.outline = `${outlineWidth}px solid ${outlineColor}`;
+              node.el.style.outlineOffset = `${outlinePad}px`;
+            } else {
+              node.el.style.outline = 'none';
+              node.el.style.outlineOffset = '0';
+            }
+
+            const barEl = node.barEl || node.el;
+            barEl.style.background = trackColor;
+            barEl.style.borderRadius = `${radius}px`;
+            if (node.fillEl) {
+              node.fillEl.style.width = `${progress * 100}%`;
+              node.fillEl.style.background = indicatorColor;
+              node.fillEl.style.borderRadius = `${radius}px`;
+            }
+          }
+        }
+
+        for (const [id, node] of overlayNodes) {
+          if (!activeIds.has(id)) {
+            node.el.remove();
+            overlayNodes.delete(id);
+          }
+        }
+      }
+
+      function handleUiJson(json, applyLvgl) {
+        if (typeof json !== 'string') return;
+        try {
+          lastUiJson = json;
+          const ui = JSON.parse(json);
+          applyCanvasSize(Number(ui?.screen?.width || 0), Number(ui?.screen?.height || 0));
+          if (applyLvgl) {
+            clearOverlay();
+          }
+          renderOverlays(ui);
+
+          if (applyLvgl && Module._load_ui_json) {
+            const len = Module.lengthBytesUTF8(json) + 1;
+            const ptr = Module._malloc(len);
+            Module.stringToUTF8(json, ptr, len);
+            Module._load_ui_json(ptr);
+            Module._free(ptr);
+          }
+        } catch (err) {
+          console.error('LVGL preview UI parse failed', err);
+          clearOverlay();
+        }
+      }
+
+      var Module = {
+        canvas: canvasEl,
+        onRuntimeInitialized: function () {
+          if (window.parent !== window) {
+            window.parent.postMessage({ type: 'lvgl-ready' }, '*');
+          }
+        },
+      };
+
+      window.addEventListener('message', function (e) {
+        if (e.data?.type === 'load-assets') {
+          assets = e.data.assets || { images: {} };
+          if (lastUiJson) {
+            handleUiJson(lastUiJson, false);
+          }
+          return;
+        }
+
+        if (e.data?.type === 'update-overlays') {
+          handleUiJson(e.data.json, false);
+          return;
+        }
+
+        if (e.data?.type === 'load-ui') {
+          handleUiJson(e.data.json, e.data.applyLvgl !== false);
+        }
+      });
+    </script>
+
+    <script async src="lvgl_wasm.js"></script>
+  </body>
+</html>

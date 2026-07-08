@@ -1,5 +1,7 @@
 #include "app_counter.h"
+#include "app_generated.h"
 #include "hal_jumper.h"
+#include "hal_buttons.h"
 #include "hal_sdl.h"
 
 #include "lvgl.h"
@@ -15,10 +17,15 @@ int main(int argc, char **argv)
     lv_init();
     hal_sdl_init();
 
+    #ifdef SIM_USE_GENERATED_UI
+    app_generated_init();
+    #else
     app_counter_init();
+    #endif
+    hal_buttons_init();
     hal_jumper_init(app_counter_on_jumper, NULL);
 
-    printf("simulator ready: Up/+ increment, Down/- decrement, Esc/Q quit\n");
+    printf("simulator ready: Up/+ = value_1, Down/- = value_2, Esc/Q quit\n");
 
     uint32_t last_tick = SDL_GetTicks();
 
@@ -28,6 +35,7 @@ int main(int argc, char **argv)
         last_tick = now;
 
         hal_jumper_poll();
+        hal_buttons_poll();
         lv_timer_handler();
         SDL_Delay(5);
     }

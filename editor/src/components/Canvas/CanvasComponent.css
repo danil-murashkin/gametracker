@@ -1,0 +1,168 @@
+.canvas-component {
+  cursor: move;
+  user-select: none;
+  transition: box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.canvas-component:hover {
+  z-index: 10;
+}
+
+.canvas-component.hovered:not(.selected) {
+  box-shadow: 0 0 0 1px #2196F3;
+}
+
+.canvas-component.selected {
+  z-index: 20;
+}
+
+/* Selection overlay */
+.selection-overlay {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  border: 2px solid #2196F3;
+  pointer-events: none;
+  box-sizing: content-box;
+}
+
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border: 2px solid #2196F3;
+  border-radius: 1px;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.resize-handle.top-left {
+  top: -4px;
+  left: -4px;
+  cursor: nwse-resize;
+}
+
+.resize-handle.top {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-handle.top-right {
+  top: -4px;
+  right: -4px;
+  cursor: nesw-resize;
+}
+
+.resize-handle.left {
+  top: 50%;
+  left: -4px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-handle.right {
+  top: 50%;
+  right: -4px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-handle.bottom-left {
+  bottom: -4px;
+  left: -4px;
+  cursor: nesw-resize;
+}
+
+.resize-handle.bottom {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-handle.bottom-right {
+  bottom: -4px;
+  right: -4px;
+  cursor: nwse-resize;
+}
+
+.resize-handle:hover {
+  background: #2196F3;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* LVGL component specific styles */
+.lvgl-btn {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.lvgl-label {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Locked component */
+.canvas-component.locked {
+  cursor: default;
+}
+
+.canvas-component.locked .resize-handle {
+  display: none;
+}
+
+/* Hidden component (visible=false) */
+.canvas-component.hidden-component {
+  outline: 1px dashed #999;
+}
+
+/* During drag, allow components to overflow their parent containers */
+.canvas.dragging-move,
+.canvas.dragging-move .canvas-component,
+.canvas.dragging-move .lvgl-tabview-content,
+.canvas.dragging-move .lvgl-win-content,
+.canvas.dragging-move .lvgl-obj {
+  overflow: visible !important;
+}
+
+/* Container content areas default overflow */
+.lvgl-tabview-content,
+.lvgl-win-content {
+  overflow: hidden;
+}
+.align-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 18px;
+  height: 18px;
+  background: #ff9800;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 30;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}

@@ -24,6 +24,18 @@ cmake --build build
 .\build\simulator.exe
 ```
 
+### Запуск UI из `editor/` (сгенерированный код)
+
+1. Экспортируйте `ui*.c/ui*.h` из редактора в `common/ui_generated/`
+   (или используйте уже добавленный минимальный пример).
+2. Соберите симулятор с флагом:
+
+```powershell
+cd simulator
+.\build.ps1 -GeneratedUI
+.\build\simulator.exe
+```
+
 Или одной командой:
 
 ```powershell

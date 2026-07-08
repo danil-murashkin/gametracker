@@ -1,12 +1,21 @@
+param(
+    [switch]$GeneratedUI
+)
+
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
 . "$PSScriptRoot\activate-build.ps1"
 
+$cmakeArgs = @("-B", "build", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release")
+if ($GeneratedUI) {
+    $cmakeArgs += "-DSIM_USE_GENERATED_UI=ON"
+}
+
 if (-not (Test-Path build)) {
-    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+    cmake @cmakeArgs
 } else {
-    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+    cmake @cmakeArgs
 }
 cmake --build build
 

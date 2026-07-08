@@ -8,6 +8,7 @@ idf_component_register(
          "platform/ui_port_esp.c"
          "platform/hal_jumper_gpio.c"
          "platform/hal_jumper_poll_stub.c"
+         "platform/hal_buttons_esp.c"
          ${COMMON_APP_SOURCES}
          ${COMMON_UI_SOURCES}
     INCLUDE_DIRS "." "hal" "platform"

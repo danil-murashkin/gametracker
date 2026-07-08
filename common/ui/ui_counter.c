@@ -28,7 +28,7 @@ void ui_counter_init(void)
 
     lv_obj_t *square = lv_obj_create(screen);
     lv_obj_set_size(square, 120, 120);
-    lv_obj_set_style_bg_color(square, lv_color_hex(0x0066FF), 0);
+    lv_obj_set_style_bg_color(square, lv_color_hex(0x00FF00), 0);
     lv_obj_set_style_bg_opa(square, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(square, 0, 0);
     lv_obj_set_style_radius(square, 8, 0);

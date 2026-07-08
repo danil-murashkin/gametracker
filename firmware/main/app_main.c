@@ -1,5 +1,6 @@
 #include "hal_display.h"
 #include "hal_jumper.h"
+#include "hal_buttons.h"
 #include "app_counter.h"
 
 #include "esp_log.h"
@@ -17,6 +18,7 @@ void app_main(void)
 
     ESP_ERROR_CHECK(hal_display_init());
     app_counter_init();
+    hal_buttons_init();
     hal_jumper_init(app_counter_on_jumper, NULL);
 
     ESP_LOGI(TAG, "ready");

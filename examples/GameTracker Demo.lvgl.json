@@ -1,0 +1,1092 @@
+{
+  "version": "1.0.0",
+  "name": "GameTracker Demo",
+  "createdAt": 1783507598187,
+  "updatedAt": 1783507680926,
+  "canvasSize": {
+    "width": 240,
+    "height": 320
+  },
+  "pages": [
+    {
+      "id": "page-main",
+      "name": "main",
+      "components": [
+        {
+          "id": "comp-img-alive",
+          "type": "img",
+          "name": "img_alive",
+          "x": 50,
+          "y": 24,
+          "width": 140,
+          "height": 200,
+          "children": [],
+          "props": {
+            "src": "res-vault-boy-alive"
+          },
+          "styles": {
+            "default": {
+              "bgColor": "transparent",
+              "borderColor": "transparent",
+              "borderWidth": 0,
+              "borderRadius": 0,
+              "textColor": "#00FF00",
+              "opacity": 1,
+              "padding": 0
+            }
+          },
+          "events": [],
+          "animations": [],
+          "parentId": null,
+          "locked": false,
+          "visible": true
+        },
+        {
+          "id": "comp-img-dead",
+          "type": "img",
+          "name": "img_dead",
+          "x": 50,
+          "y": 24,
+          "width": 140,
+          "height": 200,
+          "children": [],
+          "props": {
+            "src": "res-vault-boy-dead"
+          },
+          "styles": {
+            "default": {
+              "bgColor": "transparent",
+              "borderColor": "transparent",
+              "borderWidth": 0,
+              "borderRadius": 0,
+              "textColor": "#00FF00",
+              "opacity": 1,
+              "padding": 0
+            }
+          },
+          "events": [],
+          "animations": [],
+          "parentId": null,
+          "locked": false,
+          "visible": false,
+          "flags": {
+            "hidden": true
+          }
+        },
+        {
+          "id": "comp-pb-health",
+          "type": "bar",
+          "name": "pb_health",
+          "x": 60,
+          "y": 230,
+          "width": 120,
+          "height": 10,
+          "children": [],
+          "props": {
+            "min": 0,
+            "max": 100,
+            "value": 100
+          },
+          "styles": {
+            "default": {
+              "bgColor": "#1a3d1a",
+              "borderColor": "transparent",
+              "borderWidth": 0,
+              "borderRadius": 0,
+              "textColor": "#00FF00",
+              "opacity": 1,
+              "padding": 0,
+              "indicatorColor": "#00FF00",
+              "outlinePad": 2,
+              "outlineWidth": 2,
+              "outlineColor": "#00ff00"
+            }
+          },
+          "events": [],
+          "animations": [],
+          "parentId": null,
+          "locked": false,
+          "visible": true
+        },
+        {
+          "id": "comp-lb-hits",
+          "type": "label",
+          "name": "lb_hits",
+          "x": 20,
+          "y": 264,
+          "width": 100,
+          "height": 24,
+          "children": [],
+          "props": {
+            "text": "0",
+            "textAlign": "center"
+          },
+          "styles": {
+            "default": {
+              "bgColor": "transparent",
+              "borderColor": "transparent",
+              "borderWidth": 0,
+              "borderRadius": 0,
+              "textColor": "#00FF00",
+              "opacity": 1,
+              "padding": 0
+            }
+          },
+          "events": [],
+          "animations": [],
+          "parentId": null,
+          "locked": false,
+          "visible": true
+        },
+        {
+          "id": "comp-lb-heal",
+          "type": "label",
+          "name": "lb_heal",
+          "x": 120,
+          "y": 264,
+          "width": 100,
+          "height": 24,
+          "children": [],
+          "props": {
+            "text": "100",
+            "textAlign": "center"
+          },
+          "styles": {
+            "default": {
+              "bgColor": "transparent",
+              "borderColor": "transparent",
+              "borderWidth": 0,
+              "borderRadius": 0,
+              "textColor": "#00FF00",
+              "opacity": 1,
+              "padding": 0
+            }
+          },
+          "events": [],
+          "animations": [],
+          "parentId": null,
+          "locked": false,
+          "visible": true
+        }
+      ],
+      "backgroundColor": "#000000"
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "id": "res-vault-boy-alive",
+        "name": "vault_boy_alive",
+        "originalName": "vault_boy_alive.png",
+        "width": 140,
+        "height": 200,
+        "format": "RGB565",
+        "data": "data:image/png;base64,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",
+        "cArrayName": "img_vault_boy_alive",
+        "size": 2254,
+        "createdAt": 1783484673302
+      },
+      {
+        "id": "res-vault-boy-dead",
+        "name": "vault_boy_dead",
+        "originalName": "vault_boy_dead.png",
+        "width": 140,
+        "height": 200,
+        "format": "RGB565",
+        "data": "data:image/png;base64,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",
+        "cArrayName": "img_vault_boy_dead",
+        "size": 2338,
+        "createdAt": 1783484673302
+      }
+    ],
+    "fonts": []
+  },
+  "variables": [],
+  "logicGraphs": [
+    {
+      "id": "graph-health",
+      "name": "health_update",
+      "description": "Blocks-only demo: hits++ every 1s (0..100), heal=100, health=heal-hits, update bar/labels, toggle images",
+      "nodes": [
+        {
+          "id": "node-health-timer",
+          "type": "trigger",
+          "subType": "timer_trigger",
+          "label": "Timer trigger",
+          "position": {
+            "x": 80,
+            "y": 80
+          },
+          "params": {
+            "mode": "interval",
+            "duration": 50
+          },
+          "inputs": [
+            {
+              "id": "node-health-timer-in-0",
+              "name": "Start",
+              "type": "execution"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-health-timer-out-0",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-health-timer-out-1",
+              "name": "Count",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "id": "node-read-hits",
+          "type": "data",
+          "subType": "var_read",
+          "label": "Read hits",
+          "position": {
+            "x": 90,
+            "y": -225
+          },
+          "params": {
+            "variableName": "hits"
+          },
+          "inputs": [],
+          "outputs": [
+            {
+              "id": "node-read-hits-out-0",
+              "name": "Value",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "id": "node-hits-plus1",
+          "type": "data",
+          "subType": "math_op",
+          "label": "hits + 1",
+          "position": {
+            "x": 315,
+            "y": -210
+          },
+          "params": {
+            "operator": "+"
+          },
+          "inputs": [
+            {
+              "id": "node-hits-plus1-in-a",
+              "name": "A",
+              "type": "int"
+            },
+            {
+              "id": "node-hits-plus1-in-b",
+              "name": "B",
+              "type": "int",
+              "defaultValue": 1
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-hits-plus1-out-0",
+              "name": "Result",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "id": "node-write-hits",
+          "type": "data",
+          "subType": "var_write",
+          "label": "Write hits",
+          "position": {
+            "x": 510,
+            "y": 480
+          },
+          "params": {
+            "variableName": "hits"
+          },
+          "inputs": [
+            {
+              "id": "node-write-hits-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-write-hits-val",
+              "name": "Value",
+              "type": "int"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-write-hits-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-read-hits2",
+          "type": "data",
+          "subType": "var_read",
+          "label": "Read hits (after write)",
+          "position": {
+            "x": 315,
+            "y": 0
+          },
+          "params": {
+            "variableName": "hits"
+          },
+          "inputs": [],
+          "outputs": [
+            {
+              "id": "node-read-hits2-out-0",
+              "name": "Value",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "id": "node-compare-hits-gt100",
+          "type": "condition",
+          "subType": "compare",
+          "label": "hits > 100",
+          "position": {
+            "x": 760,
+            "y": 20
+          },
+          "params": {
+            "operator": ">"
+          },
+          "inputs": [
+            {
+              "id": "node-compare-hits-gt100-in-a",
+              "name": "A",
+              "type": "int"
+            },
+            {
+              "id": "node-compare-hits-gt100-in-b",
+              "name": "B",
+              "type": "int",
+              "defaultValue": 100
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-compare-hits-gt100-out-0",
+              "name": "Result",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "id": "node-if-clamp-hits",
+          "type": "condition",
+          "subType": "if_else",
+          "label": "Clamp hits",
+          "position": {
+            "x": 760,
+            "y": 120
+          },
+          "params": {},
+          "inputs": [
+            {
+              "id": "node-if-clamp-hits-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-if-clamp-hits-cond",
+              "name": "Condition",
+              "type": "bool"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-if-clamp-hits-true",
+              "name": "True",
+              "type": "execution"
+            },
+            {
+              "id": "node-if-clamp-hits-false",
+              "name": "False",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-write-hits-100",
+          "type": "data",
+          "subType": "var_write",
+          "label": "hits = 100",
+          "position": {
+            "x": 980,
+            "y": 80
+          },
+          "params": {
+            "variableName": "hits"
+          },
+          "inputs": [
+            {
+              "id": "node-write-hits-100-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-write-hits-100-val",
+              "name": "Value",
+              "type": "int",
+              "defaultValue": 100
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-write-hits-100-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-heal-const",
+          "type": "data",
+          "subType": "var_write",
+          "label": "heal = 100",
+          "position": {
+            "x": 980,
+            "y": 160
+          },
+          "params": {
+            "variableName": "heal"
+          },
+          "inputs": [
+            {
+              "id": "node-heal-const-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-heal-const-val",
+              "name": "Value",
+              "type": "int",
+              "defaultValue": 100
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-heal-const-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-read-heal",
+          "type": "data",
+          "subType": "var_read",
+          "label": "Read heal",
+          "position": {
+            "x": 1120,
+            "y": 20
+          },
+          "params": {
+            "variableName": "heal"
+          },
+          "inputs": [],
+          "outputs": [
+            {
+              "id": "node-read-heal-out-0",
+              "name": "Value",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "id": "node-read-hits3",
+          "type": "data",
+          "subType": "var_read",
+          "label": "Read hits",
+          "position": {
+            "x": 1120,
+            "y": 80
+          },
+          "params": {
+            "variableName": "hits"
+          },
+          "inputs": [],
+          "outputs": [
+            {
+              "id": "node-read-hits3-out-0",
+              "name": "Value",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "id": "node-health-sub",
+          "type": "data",
+          "subType": "math_op",
+          "label": "health = heal - hits",
+          "position": {
+            "x": 1280,
+            "y": 50
+          },
+          "params": {
+            "operator": "-"
+          },
+          "inputs": [
+            {
+              "id": "node-health-sub-in-a",
+              "name": "A",
+              "type": "int"
+            },
+            {
+              "id": "node-health-sub-in-b",
+              "name": "B",
+              "type": "int"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-health-sub-out-0",
+              "name": "Result",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "id": "node-set-bar",
+          "type": "action",
+          "subType": "set_value",
+          "label": "Set bar value",
+          "position": {
+            "x": 1280,
+            "y": 160
+          },
+          "params": {
+            "targetComponent": "pb_health",
+            "componentType": "bar"
+          },
+          "inputs": [
+            {
+              "id": "node-set-bar-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-set-bar-val",
+              "name": "Value",
+              "type": "int"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-set-bar-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-set-hits-text",
+          "type": "action",
+          "subType": "set_text",
+          "label": "Set hits label",
+          "position": {
+            "x": 1440,
+            "y": 120
+          },
+          "params": {
+            "targetComponent": "lb_hits"
+          },
+          "inputs": [
+            {
+              "id": "node-set-hits-text-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-set-hits-text-val",
+              "name": "Text",
+              "type": "string"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-set-hits-text-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-set-heal-text",
+          "type": "action",
+          "subType": "set_text",
+          "label": "Set heal label",
+          "position": {
+            "x": 1440,
+            "y": 200
+          },
+          "params": {
+            "targetComponent": "lb_heal"
+          },
+          "inputs": [
+            {
+              "id": "node-set-heal-text-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-set-heal-text-val",
+              "name": "Text",
+              "type": "string"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-set-heal-text-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-compare-health-gt0",
+          "type": "condition",
+          "subType": "compare",
+          "label": "health > 0",
+          "position": {
+            "x": 1485,
+            "y": -120
+          },
+          "params": {
+            "operator": ">"
+          },
+          "inputs": [
+            {
+              "id": "node-compare-health-gt0-in-a",
+              "name": "A",
+              "type": "int"
+            },
+            {
+              "id": "node-compare-health-gt0-in-b",
+              "name": "B",
+              "type": "int",
+              "defaultValue": 0
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-compare-health-gt0-out-0",
+              "name": "Result",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "id": "node-if-health",
+          "type": "condition",
+          "subType": "if_else",
+          "label": "Health > 0?",
+          "position": {
+            "x": 1725,
+            "y": -30
+          },
+          "params": {},
+          "inputs": [
+            {
+              "id": "node-if-health-exec",
+              "name": "Execute",
+              "type": "execution"
+            },
+            {
+              "id": "node-if-health-cond",
+              "name": "Condition",
+              "type": "bool"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-if-health-true",
+              "name": "True",
+              "type": "execution"
+            },
+            {
+              "id": "node-if-health-false",
+              "name": "False",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-show-alive",
+          "type": "action",
+          "subType": "show_hide",
+          "label": "Show alive",
+          "position": {
+            "x": 1980,
+            "y": -45
+          },
+          "params": {
+            "targetComponent": "img_alive",
+            "action": "show"
+          },
+          "inputs": [
+            {
+              "id": "node-show-alive-exec",
+              "name": "Execute",
+              "type": "execution"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-show-alive-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-hide-dead",
+          "type": "action",
+          "subType": "show_hide",
+          "label": "Hide dead",
+          "position": {
+            "x": 2010,
+            "y": -255
+          },
+          "params": {
+            "targetComponent": "img_dead",
+            "action": "hide"
+          },
+          "inputs": [
+            {
+              "id": "node-hide-dead-exec",
+              "name": "Execute",
+              "type": "execution"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-hide-dead-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-hide-alive",
+          "type": "action",
+          "subType": "show_hide",
+          "label": "Hide alive",
+          "position": {
+            "x": 1980,
+            "y": 105
+          },
+          "params": {
+            "targetComponent": "img_alive",
+            "action": "hide"
+          },
+          "inputs": [
+            {
+              "id": "node-hide-alive-exec",
+              "name": "Execute",
+              "type": "execution"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-hide-alive-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        },
+        {
+          "id": "node-show-dead",
+          "type": "action",
+          "subType": "show_hide",
+          "label": "Show dead",
+          "position": {
+            "x": 2010,
+            "y": 300
+          },
+          "params": {
+            "targetComponent": "img_dead",
+            "action": "show"
+          },
+          "inputs": [
+            {
+              "id": "node-show-dead-exec",
+              "name": "Execute",
+              "type": "execution"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "node-show-dead-done",
+              "name": "Done",
+              "type": "execution"
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "id": "conn-timer-update",
+          "sourceNode": "node-health-timer",
+          "sourceOutput": "node-health-timer-out-0",
+          "targetNode": "node-write-hits",
+          "targetInput": "node-write-hits-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-readhits-math",
+          "sourceNode": "node-read-hits",
+          "sourceOutput": "node-read-hits-out-0",
+          "targetNode": "node-hits-plus1",
+          "targetInput": "node-hits-plus1-in-a",
+          "type": "data"
+        },
+        {
+          "id": "conn-math-writehits",
+          "sourceNode": "node-hits-plus1",
+          "sourceOutput": "node-hits-plus1-out-0",
+          "targetNode": "node-write-hits",
+          "targetInput": "node-write-hits-val",
+          "type": "data"
+        },
+        {
+          "id": "conn-writehits-if",
+          "sourceNode": "node-write-hits",
+          "sourceOutput": "node-write-hits-done",
+          "targetNode": "node-if-clamp-hits",
+          "targetInput": "node-if-clamp-hits-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-readhits2-gt100-a",
+          "sourceNode": "node-read-hits2",
+          "sourceOutput": "node-read-hits2-out-0",
+          "targetNode": "node-compare-hits-gt100",
+          "targetInput": "node-compare-hits-gt100-in-a",
+          "type": "data"
+        },
+        {
+          "id": "conn-gt100-ifcond",
+          "sourceNode": "node-compare-hits-gt100",
+          "sourceOutput": "node-compare-hits-gt100-out-0",
+          "targetNode": "node-if-clamp-hits",
+          "targetInput": "node-if-clamp-hits-cond",
+          "type": "data"
+        },
+        {
+          "id": "conn-ifclamp-true",
+          "sourceNode": "node-if-clamp-hits",
+          "sourceOutput": "node-if-clamp-hits-true",
+          "targetNode": "node-write-hits-100",
+          "targetInput": "node-write-hits-100-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-ifclamp-false",
+          "sourceNode": "node-if-clamp-hits",
+          "sourceOutput": "node-if-clamp-hits-false",
+          "targetNode": "node-heal-const",
+          "targetInput": "node-heal-const-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-writehits100-next",
+          "sourceNode": "node-write-hits-100",
+          "sourceOutput": "node-write-hits-100-done",
+          "targetNode": "node-heal-const",
+          "targetInput": "node-heal-const-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-readheal-health-a",
+          "sourceNode": "node-read-heal",
+          "sourceOutput": "node-read-heal-out-0",
+          "targetNode": "node-health-sub",
+          "targetInput": "node-health-sub-in-a",
+          "type": "data"
+        },
+        {
+          "id": "conn-readhits3-health-b",
+          "sourceNode": "node-read-hits3",
+          "sourceOutput": "node-read-hits3-out-0",
+          "targetNode": "node-health-sub",
+          "targetInput": "node-health-sub-in-b",
+          "type": "data"
+        },
+        {
+          "id": "conn-heal-setbar",
+          "sourceNode": "node-heal-const",
+          "sourceOutput": "node-heal-const-done",
+          "targetNode": "node-set-bar",
+          "targetInput": "node-set-bar-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-health-setbar-val",
+          "sourceNode": "node-health-sub",
+          "sourceOutput": "node-health-sub-out-0",
+          "targetNode": "node-set-bar",
+          "targetInput": "node-set-bar-val",
+          "type": "data"
+        },
+        {
+          "id": "conn-setbar-hitslabel",
+          "sourceNode": "node-set-bar",
+          "sourceOutput": "node-set-bar-done",
+          "targetNode": "node-set-hits-text",
+          "targetInput": "node-set-hits-text-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-hitslabel-text",
+          "sourceNode": "node-read-hits3",
+          "sourceOutput": "node-read-hits3-out-0",
+          "targetNode": "node-set-hits-text",
+          "targetInput": "node-set-hits-text-val",
+          "type": "data"
+        },
+        {
+          "id": "conn-hitslabel-heallabel",
+          "sourceNode": "node-set-hits-text",
+          "sourceOutput": "node-set-hits-text-done",
+          "targetNode": "node-set-heal-text",
+          "targetInput": "node-set-heal-text-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-heallabel-text",
+          "sourceNode": "node-read-heal",
+          "sourceOutput": "node-read-heal-out-0",
+          "targetNode": "node-set-heal-text",
+          "targetInput": "node-set-heal-text-val",
+          "type": "data"
+        },
+        {
+          "id": "conn-heallabel-ifhealth",
+          "sourceNode": "node-set-heal-text",
+          "sourceOutput": "node-set-heal-text-done",
+          "targetNode": "node-if-health",
+          "targetInput": "node-if-health-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-health-gt0-a",
+          "sourceNode": "node-health-sub",
+          "sourceOutput": "node-health-sub-out-0",
+          "targetNode": "node-compare-health-gt0",
+          "targetInput": "node-compare-health-gt0-in-a",
+          "type": "data"
+        },
+        {
+          "id": "conn-gt0-ifcond",
+          "sourceNode": "node-compare-health-gt0",
+          "sourceOutput": "node-compare-health-gt0-out-0",
+          "targetNode": "node-if-health",
+          "targetInput": "node-if-health-cond",
+          "type": "data"
+        },
+        {
+          "id": "conn-ifhealth-true",
+          "sourceNode": "node-if-health",
+          "sourceOutput": "node-if-health-true",
+          "targetNode": "node-show-alive",
+          "targetInput": "node-show-alive-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-showalive-hidedead",
+          "sourceNode": "node-show-alive",
+          "sourceOutput": "node-show-alive-done",
+          "targetNode": "node-hide-dead",
+          "targetInput": "node-hide-dead-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-ifhealth-false",
+          "sourceNode": "node-if-health",
+          "sourceOutput": "node-if-health-false",
+          "targetNode": "node-hide-alive",
+          "targetInput": "node-hide-alive-exec",
+          "type": "execution"
+        },
+        {
+          "id": "conn-hidealive-showdead",
+          "sourceNode": "node-hide-alive",
+          "sourceOutput": "node-hide-alive-done",
+          "targetNode": "node-show-dead",
+          "targetInput": "node-show-dead-exec",
+          "type": "execution"
+        }
+      ],
+      "variables": [
+        {
+          "id": "hw-value-2",
+          "name": "value_2",
+          "type": "bool",
+          "defaultValue": false,
+          "source": "hardware",
+          "readOnly": true,
+          "readExpr": "value_2",
+          "includeHeader": "hal_buttons.h",
+          "description": "Button 2 press state (GPIO -)"
+        },
+        {
+          "id": "hw-value-1",
+          "name": "value_1",
+          "type": "bool",
+          "defaultValue": false,
+          "source": "hardware",
+          "readOnly": true,
+          "readExpr": "value_1",
+          "includeHeader": "hal_buttons.h",
+          "description": "Button 1 press state (GPIO +)"
+        },
+        {
+          "id": "var-hits",
+          "name": "hits",
+          "type": "int",
+          "defaultValue": 0
+        },
+        {
+          "id": "var-heal",
+          "name": "heal",
+          "type": "int",
+          "defaultValue": 100
+        }
+      ]
+    }
+  ],
+  "codeGenOptions": {
+    "outputFormat": "multi-file",
+    "includeComments": true,
+    "useStaticAllocation": true,
+    "prefix": "ui",
+    "indentSize": 4,
+    "indentStyle": "spaces"
+  },
+  "display": {
+    "width": 240,
+    "height": 320,
+    "colorDepth": 16,
+    "rotation": 0
+  },
+  "lvglConfig": {
+    "version": "9",
+    "colorFormat": "RGB565",
+    "fontLarge": true,
+    "defaultFont": "montserrat_14",
+    "useBuiltinSymbols": true,
+    "symbolFont": "montserrat_14",
+    "memSize": 48
+  }
+}

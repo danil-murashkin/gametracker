@@ -9,6 +9,8 @@ include("${COMMON_DIR}/common_sources.cmake")
 
 include(FetchContent)
 
+option(SIM_USE_GENERATED_UI "Use common/ui_generated (exported from editor)" OFF)
+
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
@@ -74,9 +76,23 @@ add_executable(simulator
     platform/platform_sdl.c
     platform/hal_sdl.c
     platform/hal_jumper_sdl.c
+    platform/hal_buttons_sdl.c
     ${COMMON_APP_SOURCES}
     ${COMMON_UI_SOURCES}
 )
+
+if(SIM_USE_GENERATED_UI)
+    target_compile_definitions(simulator PRIVATE SIM_USE_GENERATED_UI=1)
+    file(GLOB UI_GENERATED_SOURCES "${COMMON_DIR}/ui_generated/*.c")
+    target_sources(simulator PRIVATE
+        "${COMMON_DIR}/app/app_generated.c"
+        ${UI_GENERATED_SOURCES}
+    )
+    target_include_directories(simulator PRIVATE
+        "${COMMON_DIR}/app"
+        "${COMMON_DIR}/ui_generated"
+    )
+endif()
 
 target_include_directories(simulator PRIVATE
     ${COMMON_INCLUDE_DIRS}

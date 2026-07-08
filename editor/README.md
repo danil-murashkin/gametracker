@@ -1,76 +1,184 @@
-# Редакторы
+# Редактор GameTracker (форк IoTSharp)
 
-Артефакты кладут в `common/` (UI → `common/ui/`, логика → `common/rules/rules.json`).
+`editor/` — встроенный **визуальный редактор** LVGL-интерфейсов: браузер, без тяжёлых IDE, **open source** (MIT).
 
-## Локальный Blockly (FSM → rules.json)
+Основа — [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor). Исходники форка лежат **в этом каталоге**, с **английским интерфейсом** и примерами проектов.
 
-```powershell
-cd editor/blockly
-.\start.ps1
+Интеграция с прошивкой и симулятором репозитория — в [корневом README](../README.md).
+
+## Вкладки
+
+
+| Вкладка     | Назначение                                                    |
+| ----------- | ------------------------------------------------------------- |
+| **Design**  | Экран: виджеты, стили, ресурсы (картинки, шрифты)             |
+| **Logic**   | Визуальная логика: триггеры, условия, действия над UI         |
+| **Code**    | Просмотр и скачивание сгенерированных `.c` / `.h`             |
+| **Preview** | Проверка экрана в браузере: Simple Preview + LVGL Preview + **Compile & Run** (если включено) |
+
+
+На **Design** у компонентов настраиваются свойства и вкладка **Events** (обработчики на конкретном виджете). На **Logic** — графы из нод: триггеры, ветвления, чтение переменных, show/hide и т.д.
+
+## Экспорт кода
+
+Вкладка **Code** — скачать отдельные файлы или ZIP.
+
+
+| Файл                          | Содержимое                         |
+| ----------------------------- | ---------------------------------- |
+| `ui.c` / `ui.h`               | Инициализация LVGL, виджеты, стили |
+| `ui_events.c` / `ui_events.h` | Обработчики событий UI (Events)    |
+| `ui_logic.c` / `ui_logic.h`   | Логика из Logic Editor             |
+
+
+## Logic Editor
+
+### Палитра нод (кратко)
+
+| Категория   | Примеры |
+| ----------- | ------- |
+| **Trigger** | Event trigger, Timer trigger, **Hardware trigger** |
+| **Condition** | If/Else, Compare, Logic (AND/OR) |
+| **Actions** | Show/hide, Set text, Set property, Navigate page |
+| **Data**    | **Read variable**, Write variable, Get property, Math |
+
+### Debug (Logic tab)
+
+Пошаговая симуляция графа **внутри Logic** (не Preview):
+
+1. **Debug** — старт с первого trigger-нода
+2. **Step** — выполнить следующую ноду (переменные обновляются справа)
+3. **Fire** — на таймере: один тик цепочки Execute
+4. **Ctrl+click** на ноде — breakpoint
+
+Debug исполняет те же правила, что Simple Preview и codegen (C block, Write variable, If/Else ветки).
+
+
+- **User variables** — свои `int` / `float` / `string` / `bool` (панель **Variables** справа).
+- **Hardware (ESP32)** — встроенные только для чтения:
+  - `value_1` — состояние кнопки 1 (GPIO «+»)
+  - `value_2` — состояние кнопки 2 (GPIO «−»)
+
+Читать их — нода **Read variable**. Писать в железные переменные нельзя.
+
+### Типовые сценарии
+
+**Скрыть картинку при старте, показать по кнопке**
+
+1. На **Design**: у изображения в иерархии отключить видимость (👁️) или **Flags → Hidden** — скрыто сразу при создании UI.
+2. На **Logic**: **Hardware trigger** (`value_1`, Pressed) → **Show/hide** (Show, ваш `img`).
+
+**Реакция на нажатие кнопки на устройстве**
+
+**Hardware trigger** → действия (Set text, Set value, Show/hide …). Параметр **Trigger on**: Pressed / Released / Any change.
+
+**Timer trigger**
+
+| Порт / параметр | Назначение |
+| --- | --- |
+| **Start** (вход) | Запуск таймера по execution-цепочке (например, после клика). **Если не подключён** — таймер стартует сам в `ui_logic_init()`. |
+| **Execute** (выход) | Срабатывает каждый тик таймера → действия дальше по цепочке |
+| **Mode → Periodic** | Повтор каждые N ms (для счётчика раз в секунду) |
+| **Mode → Delayed** | Один раз через N ms |
+
+**Однократное действие после загрузки** (без отдельного Startup-нода)
+
+**Timer trigger** (Delayed, 1 ms) → нужное действие (например **Show/hide → Hide**). Для мгновенного скрытия без мигания предпочтительнее **Hidden** в свойствах компонента.
+
+**Клик по виджету на экране**
+
+**Event trigger** (тип события, например Click) → цепочка действий. Для привязки к компоненту используйте также вкладку **Events** на Design.
+
+Документация по виджетам: [docs/components/](docs/components/README.md).
+
+## Compile & Run (симуляция внутри браузера)
+
+В Preview есть под‑вкладка **🔨 Compile & Run** — она компилирует текущий проект в WASM и запускает LVGL‑runtime прямо в браузере (таймеры, логика, обработчики).
+
+В `lvgl-editor-start.ps1` это включается переменной окружения `VITE_ENABLE_COMPILE_PREVIEW=true`.
+
+## Структура `editor/`
+
+```
+editor/
+├── src/                   # React + codegen
+├── docs/                  # компоненты LVGL, шрифты
+├── scripts/               # apply-en-ui.mjs, build-gametracker-demo.mjs
+├── lvgl-editor-start.ps1  # запуск dev-сервера
+├── package.json
+└── FORK.md                # отличия от upstream
 ```
 
-http://localhost:8081 — офлайн, Blockly 10.x из `npm`.
-
-См. [blockly/README.md](blockly/README.md).
-
-## Block Factory (свои блоки Blockly)
+## Запуск
 
 ```powershell
-cd editor/block-factory
-.\start.ps1
+cd editor
+.\lvgl-editor-start.ps1
 ```
 
-http://localhost:8082 — официальный **Blockly Developer Tools** (Block Factory) из blockly-samples.
+→ [http://localhost:8083](http://localhost:8083)
 
-См. [block-factory/README.md](block-factory/README.md).
+Нужен **Node.js 18+** (`winget install OpenJS.NodeJS.LTS`) или portable Node в `.tools/node`.
 
-## UI — LVGL (внешние)
+При первом запуске: `npm install`.
 
-### Открытый исходный код
+## Новый проект
 
-| Инструмент | Лицензия | LVGL 8.3 | Локально |
-|------------|----------|----------|----------|
-| **[EEZ Studio](https://github.com/eez-open/studio)** | GPL-3.0 | да | десктоп, офлайн |
-| **[lvgl_editor](https://github.com/lvgl/lvgl_editor)** (LVGL Pro) | исходники есть, [коммерческая лицензия](https://pro.lvgl.io) | XML → C | десктоп |
+Рекомендуемые настройки под дисплей трекера **240×320, RGB565**:
 
-Сгенерированный C из EEZ Studio — в `common/ui/`. Для вашего стека (LVGL **8.3**) EEZ Studio — основной **open-source** вариант.
 
-### Закрытые (онлайн / десктоп)
+| Параметр     | Значение                         |
+| ------------ | -------------------------------- |
+| Resolution   | **240×320 (QVGA)**               |
+| Color depth  | **16 bit (RGB565)**              |
+| Default font | `montserrat_14`                  |
+| Memory size  | **48 KB** (можно 32–64 для Demo) |
 
-| Инструмент | Open source | Примечание |
-|------------|-------------|------------|
-| [PicoPixel](https://picopixel.io/) | нет | браузер, бесплатный тариф |
-| [SquareLine Studio](https://squareline.io/) | нет | десктоп, в основном LVGL 9 |
 
-### Подключение UI
+Картинки в **Resources** — формат **RGB565** (C-массив), без тяжёлого PNG/JPEG на устройстве.
 
-1. Проект **240×320**, **RGB565**, LVGL **8.3**
-2. Экспорт `.c` / `.h` → `common/ui/`
-3. Добавить в `firmware/main/CMakeLists.txt` и `common/common_sources.cmake`
-4. Вызвать `ui_*_init()` из `app_main.c`
+## Пример Demo
 
-Проверка: [simulator/README.md](../simulator/README.md).
+Готовый проект: [../examples/gametracker-demo.lvgl.json](../examples/gametracker-demo.lvgl.json)
 
-## Логика — rules.json
 
-| Способ | Описание |
-|--------|----------|
-| **Blockly (локально)** | `editor/blockly/` — экспорт FSM |
-| **Вручную** | `common/rules/rules.json` |
-| **JSON-редактор** | VS Code, [jsoneditoronline.org](https://jsoneditoronline.org/) |
+| Имя виджета  | Тип          | Роль в Demo                          |
+| ------------ | ------------ | ------------------------------------ |
+| `img_alive`  | Image        | Vault Boy «жив»                      |
+| `img_dead`   | Image        | Vault Boy «мёртв»                    |
+| `lb_hits`    | Label        | Счётчик попаданий (старт: 0)         |
+| `lb_heal`    | Label        | Счётчик лечения (старт: 100)         |
+| `pb_health`  | Progress Bar | Здоровье `heal - hits`, шкала 0…100   |
 
-### Формат
+Тест симуляции: таймер **1 с** → `hits++` (0…100), `heal` всегда **100**, бар = `heal - hits`.
 
-Схема — [common/rules/rules.json](../common/rules/rules.json):
+**Import project** на стартовом экране → выбрать файл из `examples/`.
 
-- `initial` — стартовое состояние
-- `states` — id → `{ "label", "color" }`
-- `transitions` — `{ "from", "event", "to" }`; `from: "*"` — из любого
+Подробнее: [../examples/README.md](../examples/README.md).
 
-События: `enc_cw`, `enc_ccw`, `enc_press`, `jumper_inc`, `jumper_dec`.
+## Разработка и тесты
+
+```powershell
+cd editor
+npm run dev          # то же, что lvgl-editor-start.ps1
+npm test             # vitest (codegen)
+npm run build        # production-сборка
+```
+
+## Локализация (English UI)
+
+Перевод уже внесён в `src/`. Скрипты обновления — [scripts/README.md](scripts/README.md).
+
+После слияния с upstream:
+
+```powershell
+cd editor
+node scripts/apply-en-ui.mjs
+```
 
 ## Ссылки
 
-- [LVGL 8.3 docs](https://docs.lvgl.io/8.3/)
-- [Blockly](https://github.com/RaspberryPiFoundation/blockly) (Apache 2.0)
-- [ESP-IDF](https://docs.espressif.com/projects/esp-idf/)
+- Upstream: [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor) — [UPSTREAM-README.md](UPSTREAM-README.md)
+- Отличия форка: [FORK.md](FORK.md)
+- [LVGL docs](https://docs.lvgl.io/)
+- Репозиторий GameTracker: [README](../README.md)
