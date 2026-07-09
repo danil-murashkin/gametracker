@@ -1,4 +1,4 @@
-# Редактор GameTracker (форк IoTSharp)
+# GameTracker Editor
 
 `editor/` — встроенный **визуальный редактор** LVGL-интерфейсов: браузер, без тяжёлых IDE, **open source** (MIT).
 
@@ -95,7 +95,7 @@ Debug исполняет те же правила, что Preview и codegen (C 
 
 В Preview есть под‑вкладка **🔨 Compile & Run** — она компилирует текущий проект в WASM и запускает LVGL‑runtime прямо в браузере (таймеры, логика, обработчики).
 
-В `lvgl-editor-start.ps1` это включается переменной окружения `VITE_ENABLE_COMPILE_PREVIEW=true`.
+В `gametracker-editor-start.ps1` это включается переменной окружения `VITE_ENABLE_COMPILE_PREVIEW=true`.
 
 ## Структура `editor/`
 
@@ -104,7 +104,7 @@ editor/
 ├── src/                   # React + codegen
 ├── docs/                  # компоненты LVGL, шрифты
 ├── scripts/               # apply-en-ui.mjs, build-gametracker-demo.mjs
-├── lvgl-editor-start.ps1  # запуск dev-сервера
+├── gametracker-editor-start.ps1  # запуск dev-сервера
 ├── package.json
 └── FORK.md                # отличия от upstream
 ```
@@ -113,7 +113,7 @@ editor/
 
 ```powershell
 cd editor
-.\lvgl-editor-start.ps1
+.\gametracker-editor-start.ps1
 ```
 
 → [http://localhost:8083](http://localhost:8083)
@@ -160,7 +160,7 @@ cd editor
 
 ```powershell
 cd editor
-npm run dev          # то же, что lvgl-editor-start.ps1
+npm run dev          # то же, что gametracker-editor-start.ps1
 npm test             # vitest (codegen)
 npm run build        # production-сборка
 ```

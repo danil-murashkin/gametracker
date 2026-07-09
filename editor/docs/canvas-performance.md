@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-The design canvas (Canvas) is the core interactive area of LVGL Editor. It handles visual rendering of components, drag-and-drop movement, resize, box selection, alignment, and related operations. The architecture is optimized for high performance, ensuring smooth interaction even with large numbers of components.
+The design canvas (Canvas) is the core interactive area of GameTracker Editor. It handles visual rendering of components, drag-and-drop movement, resize, box selection, alignment, and related operations. The architecture is optimized for high performance, ensuring smooth interaction even with large numbers of components.
 
 ## 2. Component Structure
 

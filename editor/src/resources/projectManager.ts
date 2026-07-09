@@ -183,7 +183,7 @@ export async function saveProjectToFile(
         suggestedName: fileName,
         types: [
           {
-            description: 'LVGL Editor Project',
+            description: 'GameTracker Editor Project',
             accept: { 'application/json': ['.lvgl.json', '.json'] },
           },
         ],

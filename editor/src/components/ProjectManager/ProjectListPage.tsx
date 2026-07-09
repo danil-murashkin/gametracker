@@ -115,7 +115,7 @@ const ProjectListPage: React.FC = () => {
       <div className="plp-header">
         <div className="plp-logo">
           <span className="plp-logo-icon">📐</span>
-          <span className="plp-logo-text">LVGL UI Editor</span>
+          <span className="plp-logo-text">GameTracker Editor</span>
         </div>
       </div>
 

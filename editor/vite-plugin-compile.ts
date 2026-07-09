@@ -235,7 +235,7 @@ async function compileWithEmcc(
 
   const hint =
     process.platform === 'win32'
-      ? 'Install Emscripten: .\\scripts\\setup-emsdk.ps1 (or restart editor via .\\lvgl-editor-start.ps1).'
+      ? 'Install Emscripten: .\\scripts\\setup-emsdk.ps1 (or restart editor via .\\gametracker-editor-start.ps1).'
       : 'Install Emscripten SDK or set LVGL_EMSDK_ENV to emsdk_env.sh.';
 
   return {

@@ -23,14 +23,14 @@ if (-not (Test-Path node_modules)) {
 
 $url = "http://localhost:$port"
 Write-Host ""
-Write-Host "LVGL UI Editor (GameTracker fork, English UI): $url"
-Write-Host "Export .c/.h from the editor UI -> common/ui/"
+Write-Host "GameTracker Editor: $url"
+Write-Host "Export .c/.h from the editor UI -> common/ui_generated/"
 Write-Host ""
 
-# Enable compile API for Preview → Simulator (requires Emscripten SDK in PATH).
+# Enable compile API for Preview / Simulator (requires Emscripten SDK in PATH).
 $env:VITE_ENABLE_COMPILE_PREVIEW = "true"
 
-# Emscripten for Simulator — auto-detect workspace .tools/emsdk or C:\emsdk
+# Emscripten for Simulator - auto-detect workspace .tools/emsdk or C:\emsdk
 $emsdkCandidates = @(
     $(if ($env:EMSDK) { Join-Path $env:EMSDK "emsdk_env.ps1" }),
     (Join-Path (Split-Path $PSScriptRoot -Parent) ".tools\emsdk\emsdk_env.ps1"),
@@ -47,7 +47,7 @@ foreach ($emsdkEnv in $emsdkCandidates) {
 if ($emsdkLoaded) {
     Write-Host "Emscripten: $(emcc --version 2>&1 | Select-Object -First 1)"
 } else {
-    Write-Host "WARN: Emscripten not found — Simulator compile will fail."
+    Write-Host "WARN: Emscripten not found - Simulator compile will fail."
     Write-Host "      Run: ..\scripts\setup-emsdk.ps1"
 }
 Start-Process $url

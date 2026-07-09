@@ -21,7 +21,6 @@ const CodePreview: React.FC = () => {
   const getProjectConfig = useProjectStore((s) => s.getProjectConfig);
   const [selectedFile, setSelectedFile] = useState<keyof GeneratedCode>('ui.c');
   const [isLoading, setIsLoading] = useState(true);
-  const [lvglVersion, setLvglVersion] = useState<CodeGenOptions['lvglVersion']>('9');
   const [projectDefaultFont, setProjectDefaultFont] = useState<string | undefined>();
   const [projectDefaultFontSize, setProjectDefaultFontSize] = useState<number | undefined>();
   const [projectUseBuiltinSymbols, setProjectUseBuiltinSymbols] = useState<boolean>(true);
@@ -42,8 +41,8 @@ const CodePreview: React.FC = () => {
   const fileNames = getGeneratedFileNames();
 
   const codeGenOptions: Partial<CodeGenOptions> = useMemo(() => ({
-    lvglVersion,
-  }), [lvglVersion]);
+    lvglVersion: '9',
+  }), []);
 
   const generatedCode = useMemo(() => {
     try {
@@ -124,15 +123,7 @@ const CodePreview: React.FC = () => {
           ))}
         </div>
         <div className="generated-code-panel-actions">
-          <select
-            className="generated-code-version-select"
-            value={lvglVersion}
-            onChange={(e) => setLvglVersion(e.target.value as CodeGenOptions['lvglVersion'])}
-            title="LVGL Version"
-          >
-            <option value="8">LVGL v8</option>
-            <option value="9">LVGL v9</option>
-          </select>
+          <span className="generated-code-version-label" title="LVGL target version">LVGL v9</span>
           <button className="generated-code-action-btn" onClick={handleCopy} title="Copy code">
             📋 Copy
           </button>

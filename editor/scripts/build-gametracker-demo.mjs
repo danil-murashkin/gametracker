@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build examples/gametracker-demo.lvgl.json from assets/vault_boy_*.png
+ * Build examples/gametracker-demo.lvgl.json from examples/assets/vault_boy_*.jpg
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -8,18 +8,35 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
-const assetsDir = join(repoRoot, 'assets');
+const assetsDir = join(repoRoot, 'examples', 'assets');
 const outDir = join(repoRoot, 'examples');
 const outFile = join(outDir, 'gametracker-demo.lvgl.json');
 
 const NOW = Date.now();
 
-function loadPngResource(fileName, id, createdAt = NOW) {
+function getJpegDimensions(buffer) {
+  let offset = 2;
+  while (offset < buffer.length) {
+    if (buffer[offset] !== 0xff) break;
+    const marker = buffer[offset + 1];
+    const length = buffer.readUInt16BE(offset + 2);
+    if (marker >= 0xc0 && marker <= 0xc3) {
+      return {
+        height: buffer.readUInt16BE(offset + 5),
+        width: buffer.readUInt16BE(offset + 7),
+      };
+    }
+    offset += 2 + length;
+  }
+  throw new Error('Could not read JPEG dimensions');
+}
+
+function loadImageResource(fileName, id, createdAt = NOW) {
   const filePath = join(assetsDir, fileName);
   const buffer = readFileSync(filePath);
-  const width = buffer.readUInt32BE(16);
-  const height = buffer.readUInt32BE(20);
+  const { width, height } = getJpegDimensions(buffer);
   const baseName = fileName.replace(/\.[^.]+$/, '');
+  const mimeType = fileName.endsWith('.png') ? 'image/png' : 'image/jpeg';
 
   return {
     id,
@@ -28,7 +45,7 @@ function loadPngResource(fileName, id, createdAt = NOW) {
     width,
     height,
     format: 'RGB565',
-    data: `data:image/png;base64,${buffer.toString('base64')}`,
+    data: `data:${mimeType};base64,${buffer.toString('base64')}`,
     cArrayName: `img_${baseName}`,
     size: buffer.length,
     createdAt,
@@ -86,8 +103,8 @@ function makeComponent({
 const IMG_ALIVE_ID = 'res-vault-boy-alive';
 const IMG_DEAD_ID = 'res-vault-boy-dead';
 
-const imgAlive = loadPngResource('vault_boy_alive.png', IMG_ALIVE_ID);
-const imgDead = loadPngResource('vault_boy_dead.png', IMG_DEAD_ID);
+const imgAlive = loadImageResource('vault_boy_alive.jpg', IMG_ALIVE_ID);
+const imgDead = loadImageResource('vault_boy_dead.jpg', IMG_DEAD_ID);
 
 const components = [
   makeComponent({

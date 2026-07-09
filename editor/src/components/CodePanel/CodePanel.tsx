@@ -136,13 +136,7 @@ const CodePanel: React.FC = () => {
           <div className="options-grid">
             <div className="option-item">
               <label>LVGL Version</label>
-              <select 
-                value={options.lvglVersion}
-                onChange={(e) => handleOptionChange('lvglVersion', e.target.value as '8' | '9')}
-              >
-                <option value="8">v8.x</option>
-                <option value="9">v9.x</option>
-              </select>
+              <span className="option-fixed-value">v9 (ESP32 + Simulator)</span>
             </div>
             
             <div className="option-item">

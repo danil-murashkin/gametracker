@@ -26,12 +26,12 @@ if (-not $Port) {
 }
 
 if (-not (Test-Path build\gametracker.bin)) {
-    Write-Host "Binary not found — building first..."
+    Write-Host "Binary not found - building first..."
     & "$PSScriptRoot\build.ps1"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-$args = @("-p", $Port, "flash")
-if ($Monitor) { $args += "monitor" }
+$idfArgs = @("-p", $Port, "flash")
+if ($Monitor) { $idfArgs += "monitor" }
 
-idf.py @args
+idf.py @idfArgs

@@ -1,4 +1,6 @@
-# Примеры проектов LVGL Editor
+# Примеры проектов GameTracker Editor
+
+Исходники картинок для примеров — в [`assets/`](assets/) (Vault Boy JPG/PNG для GameTracker Demo).
 
 ## Logic Timer Counter (минимальный тест логики)
 
@@ -40,8 +42,8 @@ npm run export:logic-counter
 
 | Имя | Тип | Назначение |
 | --- | --- | --- |
-| `img_alive` | Image | Vault Boy «жив» (`vault_boy_alive.png`) |
-| `img_dead` | Image | Vault Boy «мёртв» (`vault_boy_dead.png`), изначально скрыт |
+| `img_alive` | Image | Vault Boy «жив» (`vault_boy_alive.jpg`) |
+| `img_dead` | Image | Vault Boy «мёртв» (`vault_boy_dead.jpg`), изначально скрыт |
 | `lb_hits` | Label | Счётчик попаданий (начало: `0`) |
 | `lb_heal` | Label | Счётчик лечения (всегда `100`) |
 | `pb_health` | Progress Bar | Здоровье `heal - hits`, шкала 0…100 |
@@ -61,7 +63,7 @@ npm run export:logic-counter
 
 ### Пересборка примера
 
-После замены PNG в `assets/`:
+После замены JPG в `examples/assets/`:
 
 ```powershell
 cd editor

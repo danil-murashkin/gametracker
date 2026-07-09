@@ -9,11 +9,10 @@
 /* Logic Function Declarations                                */
 /* ------------------------------------------------------------ */
 
-// Minimal test: timer every 1s increments counter and updates label
-void logic_counter_tick(void);
+// Blocks-only demo: hits++ every 1s (0..100), heal=100, health=heal-hits, update bar/labels, toggle images
+void logic_health_update(void);
 
 // Initialize all logic graphs
 void ui_logic_init(void);
 
 #endif /* UI_LOGIC_H */
-

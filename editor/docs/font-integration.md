@@ -2,7 +2,7 @@
 
 ## 1. Overall Architecture
 
-The LVGL Editor font system supports built-in fonts and user-uploaded custom fonts (TTF/OTF). Font size is selected per component as needed. At compile time, all actually used font + size combinations are collected dynamically and converted to LVGL C source files via `lv_font_conv`.
+The GameTracker Editor font system supports built-in fonts and user-uploaded custom fonts (TTF/OTF). Font size is selected per component as needed. At compile time, all actually used font + size combinations are collected dynamically and converted to LVGL C source files via `lv_font_conv`.
 
 ```
 User-uploaded fonts (TTF/OTF)

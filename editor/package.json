@@ -1,5 +1,5 @@
 {
-  "name": "lvgl-editor",
+  "name": "gametracker-editor",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,6 +12,7 @@
     "test": "vitest --run",
     "build:demo": "node scripts/build-gametracker-demo.mjs",
     "export:logic-counter": "vitest run src/codegen/__tests__/logic-timer-counter.test.ts",
+    "export:gametracker-demo": "vitest run scripts/export-gametracker-demo.test.ts",
     "rebuild:simulator": "vitest run scripts/rebuild-simulator.test.ts"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^24.10.1",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@types/uuid": "^10.0.0",
@@ -41,7 +43,9 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "jpeg-js": "^0.4.4",
     "jsdom": "^28.0.0",
+    "pngjs": "^7.0.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",

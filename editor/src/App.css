@@ -63,7 +63,7 @@ body {
 }
 
 .logo-text {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #fff;
 }
@@ -71,10 +71,10 @@ body {
 .project-name-display {
   font-family: 'Arial Narrow', 'Roboto Condensed', 'Segoe UI', sans-serif;
   font-stretch: condensed;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  max-width: 200px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -119,11 +119,11 @@ body {
 }
 
 .tab-btn {
-  min-width: 60px;
+  min-width: 56px;
 }
 
 .toolbar-button {
-  min-width: 52px;
+  min-width: 48px;
 }
 
 .tab-btn:hover,

@@ -107,8 +107,12 @@ function getBarOutlineFrameBounds(component: LvglComponent): {
 /** LVGL 9 screens use flex — absolute x/y needs floating + no scroll on outline/positioned widgets. */
 function generateAbsoluteObjSetup(varName: string, options: CodeGenOptions): string[] {
   const indent = getIndent(options);
+  const clearScroll =
+    options.lvglVersion === '9'
+      ? `${indent}lv_obj_remove_flag(${varName}, LV_OBJ_FLAG_SCROLLABLE);`
+      : `${indent}lv_obj_clear_flag(${varName}, LV_OBJ_FLAG_SCROLLABLE);`;
   const lines = [
-    `${indent}lv_obj_remove_flag(${varName}, LV_OBJ_FLAG_SCROLLABLE);`,
+    clearScroll,
     `${indent}lv_obj_clear_flag(${varName}, LV_OBJ_FLAG_CLICKABLE);`,
   ];
   if (options.lvglVersion === '9') {

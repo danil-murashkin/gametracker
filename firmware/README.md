@@ -8,6 +8,7 @@
 | Компонент | Путь / версия |
 |-----------|----------------|
 | **ESP-IDF** | `C:\esp\esp-idf` (v5.2+, проверено на **5.3.2**) |
+| **LVGL** | **9.4** (см. [`../lvgl-target.json`](../lvgl-target.json)) |
 | **Python** | 3.8+ (ставится с ESP-IDF tools) |
 | **Git** | для Component Manager |
 

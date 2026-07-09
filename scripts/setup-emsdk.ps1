@@ -32,7 +32,7 @@ try {
     . .\emsdk_env.ps1
     emcc --version
     Write-Host ""
-    Write-Host "Emscripten OK. Restart editor dev server: cd editor; .\lvgl-editor-start.ps1"
+    Write-Host "Emscripten OK. Restart editor dev server: cd editor; .\gametracker-editor-start.ps1"
 } finally {
     Pop-Location
 }

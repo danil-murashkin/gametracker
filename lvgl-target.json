@@ -1,0 +1,6 @@
+{
+  "major": 9,
+  "idfComponent": "~9.4.0",
+  "editorWasm": "9.2",
+  "codegenVersion": "9"
+}

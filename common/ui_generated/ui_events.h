@@ -6,4 +6,3 @@
 // No events defined
 
 #endif /* UI_EVENTS_H */
-

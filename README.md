@@ -26,12 +26,12 @@
 
 | Компонент | Путь | Роль |
 |-----------|------|------|
-| **Редактор** | [`editor/`](editor/) | Форк [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor): LVGL UI, события, логика, экспорт C, **Simulator** (WASM в браузере) |
+| **Редактор** | [`editor/`](editor/) | **GameTracker Editor** (форк [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor)): LVGL UI, события, логика, экспорт C, **Simulator** (WASM в браузере) |
 | **Примеры** | [`examples/`](examples/) | Готовые `.lvgl.json` для Import (Demo Vault Boy) |
 | **Общий код** | [`common/`](common/) | UI (LVGL), приложение, HAL — для прошивки ESP32 |
 | **Прошивка** | [`firmware/`](firmware/) | ESP32, дисплей ST7789, кнопки, радио (позже) |
 
-Редактор: `cd editor` → `.\lvgl-editor-start.ps1` → http://localhost:8083. Документация — [editor/README.md](editor/README.md).
+Редактор: `cd editor` → `.\gametracker-editor-start.ps1` → http://localhost:8083. Документация — [editor/README.md](editor/README.md).
 
 ## Инфраструктура
 

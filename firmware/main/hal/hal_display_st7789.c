@@ -18,7 +18,9 @@
 
 static const char *TAG = "hal_display";
 
-static lv_disp_t *s_disp;
+#include "lvgl.h"
+
+static lv_display_t *s_disp;
 static esp_lcd_panel_io_handle_t s_io;
 static esp_lcd_panel_handle_t s_panel;
 
@@ -131,6 +133,7 @@ esp_err_t hal_display_lvgl_init(void)
             .buff_spiram = false,
             .full_refresh = false,
             .direct_mode = false,
+            .swap_bytes = true,
         },
     };
 
@@ -151,7 +154,7 @@ esp_err_t hal_display_init(void)
     return ESP_OK;
 }
 
-lv_disp_t *hal_display_get_lvgl_disp(void)
+lv_display_t *hal_display_get_lvgl_disp(void)
 {
     return s_disp;
 }

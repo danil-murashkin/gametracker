@@ -18,7 +18,7 @@ flowchart LR
 %% =======================
 subgraph D["Design (ПК)"]
     direction TB
-    LE["LVGL editor"]
+    LE["GameTracker Editor"]
     BE["Blockly editor"]
 end
 
@@ -64,7 +64,7 @@ BE -->|"rules.json"| le
 
 | Путь                      | Роль                                                       |
 | ------------------------- | ---------------------------------------------------------- |
-| `editor/`                 | LVGL Editor: Design, Logic, Code, Preview, **Simulator** (WASM) |
+| `editor/`                 | GameTracker Editor: Design, Logic, Code, Preview, **Simulator** (WASM) |
 | `common/rules/rules.json` | Единый файл логики (симулятор читает с диска, ESP — embed) |
 | `common/logic/`           | Logic Engine (FSM) + загрузчик JSON                        |
 | `common/ui/`              | LVGL UI (демо-экран: метка + квадрат)                      |
@@ -98,7 +98,7 @@ BE -->|"rules.json"| le
 
 ### 2. Симулятор (браузер)
 
-Вкладка **Simulator** в [`editor/`](../editor/): `cd editor` → `.\lvgl-editor-start.ps1` → http://localhost:8083.
+Вкладка **Simulator** в [`editor/`](../editor/): `cd editor` → `.\gametracker-editor-start.ps1` → http://localhost:8083.
 
 Компилируется и запускается тот же сгенерированный C (Emscripten + LVGL). Управление: клик по canvas; GPIO: ↑/+ = value_1, ↓/− = value_2.
 
@@ -136,7 +136,7 @@ UI в `common/ui/ui_demo.c` — ручной аналог экспорта PicoP
 
 ## Симулятор и редакторы
 
-**Редактор:** UI и логика в [`editor/`](../editor/) (форк IoTSharp/lvgl-editor). Симуляция — вкладка **Simulator** (WASM в браузере). Подробно: [editor/README.md](../editor/README.md).
+**Редактор:** **GameTracker Editor** в [`editor/`](../editor/) (форк IoTSharp/lvgl-editor). Симуляция — вкладка **Simulator** (WASM в браузере). Подробно: [editor/README.md](../editor/README.md).
 
 ## Сборка и прошивка
 

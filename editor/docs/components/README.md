@@ -1,6 +1,6 @@
-# LVGL Editor — Component Design Documentation Index
+# GameTracker Editor — Component Design Documentation Index
 
-This directory contains detailed design documentation for every component in the LVGL editor. Each component document covers property design, the style system, parent-child relationships, the UI rendering layer, code generation, and LVGL API mapping.
+This directory contains detailed design documentation for every component in GameTracker Editor. Each component document covers property design, the style system, parent-child relationships, the UI rendering layer, code generation, and LVGL API mapping.
 
 ---
 
