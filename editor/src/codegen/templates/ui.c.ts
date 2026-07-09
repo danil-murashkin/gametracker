@@ -85,6 +85,97 @@ function getCreateFunction(type: string, parentVar: string, options: CodeGenOpti
   return `${func}(${parentVar})`;
 }
 
+/** Preview-aligned outline frame bounds (stroke-centered, same as Canvas/Preview roundRect). */
+function getBarOutlineFrameBounds(component: LvglComponent): {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+} {
+  const outlineWidth = component.styles.default.outlineWidth ?? 0;
+  const outlinePad = component.styles.default.outlinePad ?? 0;
+  const { x, y, width, height } = component;
+  return {
+    x: x - outlinePad - outlineWidth,
+    y: y - outlinePad - outlineWidth,
+    // Border is drawn inside the frame — expand fully on all sides (outlinePad + outlineWidth each).
+    w: width + 2 * (outlinePad + outlineWidth),
+    h: height + 2 * (outlinePad + outlineWidth),
+  };
+}
+
+/** LVGL 9 screens use flex — absolute x/y needs floating + no scroll on outline/positioned widgets. */
+function generateAbsoluteObjSetup(varName: string, options: CodeGenOptions): string[] {
+  const indent = getIndent(options);
+  const lines = [
+    `${indent}lv_obj_remove_flag(${varName}, LV_OBJ_FLAG_SCROLLABLE);`,
+    `${indent}lv_obj_clear_flag(${varName}, LV_OBJ_FLAG_CLICKABLE);`,
+  ];
+  if (options.lvglVersion === '9') {
+    lines.push(`${indent}lv_obj_set_layout(${varName}, LV_LAYOUT_NONE);`);
+    lines.push(`${indent}lv_obj_add_flag(${varName}, LV_OBJ_FLAG_FLOATING);`);
+  }
+  return lines;
+}
+
+/**
+ * Thin bars with outline + radius 0 get pill-shaped outlines on lv_bar; use a square lv_obj frame.
+ */
+function needsBarOutlineFrame(component: LvglComponent): boolean {
+  const styles = component.styles.default;
+  if (component.type !== 'bar') return false;
+  if (styles.borderRadius !== 0) return false;
+  if (!styles.outlineWidth || styles.outlineWidth <= 0) return false;
+  if (component.widthMode && component.widthMode !== 'px') return false;
+  if (component.heightMode && component.heightMode !== 'px') return false;
+  return true;
+}
+
+function generateOutlineStyleCode(
+  varName: string,
+  styles: StyleProps,
+  options: CodeGenOptions,
+  selector: string = '0',
+): string[] {
+  const lines: string[] = [];
+  const indent = getIndent(options);
+  if (styles.outlineWidth !== undefined && styles.outlineWidth > 0) {
+    lines.push(`${indent}lv_obj_set_style_outline_width(${varName}, ${styles.outlineWidth}, ${selector});`);
+    if (styles.outlineColor) {
+      lines.push(`${indent}lv_obj_set_style_outline_color(${varName}, ${colorToLvgl(styles.outlineColor)}, ${selector});`);
+    }
+    if (styles.outlinePad !== undefined) {
+      lines.push(`${indent}lv_obj_set_style_outline_pad(${varName}, ${styles.outlinePad}, ${selector});`);
+    }
+  }
+  return lines;
+}
+
+/** Square border on a wrapper obj — LVGL outline stays rounded on thin bars; border matches Preview stroke. */
+function generateSquareBarFrameBorderCode(
+  frameVar: string,
+  styles: StyleProps,
+  options: CodeGenOptions,
+): string[] {
+  const outlineWidth = styles.outlineWidth ?? 0;
+  if (outlineWidth <= 0) return [];
+  const indent = getIndent(options);
+  const lines: string[] = [
+    `${indent}lv_obj_remove_style_all(${frameVar});`,
+    `${indent}lv_obj_set_style_bg_opa(${frameVar}, LV_OPA_TRANSP, 0);`,
+    `${indent}lv_obj_set_style_border_width(${frameVar}, ${outlineWidth}, 0);`,
+    `${indent}lv_obj_set_style_border_opa(${frameVar}, LV_OPA_COVER, 0);`,
+    `${indent}lv_obj_set_style_radius(${frameVar}, 0, 0);`,
+    `${indent}lv_obj_set_style_pad_all(${frameVar}, 0, 0);`,
+  ];
+  if (styles.outlineColor) {
+    lines.push(
+      `${indent}lv_obj_set_style_border_color(${frameVar}, ${colorToLvgl(styles.outlineColor)}, 0);`,
+    );
+  }
+  return lines;
+}
+
 /**
  * Generate style code for a component
  */
@@ -94,7 +185,8 @@ function generateStyleCode(
   options: CodeGenOptions,
   selector: string = '0',
   defaultFont?: string,
-  defaultFontSize?: number
+  defaultFontSize?: number,
+  skipOutline = false,
 ): string[] {
   const lines: string[] = [];
   const indent = getIndent(options);
@@ -179,15 +271,8 @@ function generateStyleCode(
     }
   }
 
-  // Outline
-  if (styles.outlineWidth !== undefined && styles.outlineWidth > 0) {
-    lines.push(`${indent}lv_obj_set_style_outline_width(${varName}, ${styles.outlineWidth}, ${selector});`);
-    if (styles.outlineColor) {
-      lines.push(`${indent}lv_obj_set_style_outline_color(${varName}, ${colorToLvgl(styles.outlineColor)}, ${selector});`);
-    }
-    if (styles.outlinePad !== undefined) {
-      lines.push(`${indent}lv_obj_set_style_outline_pad(${varName}, ${styles.outlinePad}, ${selector});`);
-    }
+  if (!skipOutline) {
+    lines.push(...generateOutlineStyleCode(varName, styles, options, selector));
   }
 
   // Shadow
@@ -308,7 +393,7 @@ function generateBarIndicatorStyleCode(
   options: CodeGenOptions,
   stateSelector: string = '0',
 ): string[] {
-  if (!styles.indicatorColor) {
+  if (!styles.indicatorColor && styles.borderRadius === undefined) {
     return [];
   }
   const indent = getIndent(options);
@@ -316,10 +401,19 @@ function generateBarIndicatorStyleCode(
     stateSelector === '0'
       ? 'LV_PART_INDICATOR'
       : `LV_PART_INDICATOR | ${stateSelector}`;
-  return [
-    `${indent}lv_obj_set_style_bg_color(${varName}, ${colorToLvgl(styles.indicatorColor)}, ${partSelector});`,
-    `${indent}lv_obj_set_style_bg_opa(${varName}, LV_OPA_COVER, ${partSelector});`,
-  ];
+  const lines: string[] = [];
+  if (styles.indicatorColor) {
+    lines.push(
+      `${indent}lv_obj_set_style_bg_color(${varName}, ${colorToLvgl(styles.indicatorColor)}, ${partSelector});`,
+      `${indent}lv_obj_set_style_bg_opa(${varName}, LV_OPA_COVER, ${partSelector});`,
+    );
+  }
+  // Indicator keeps theme default radius (LV_RADIUS_CIRCLE) unless explicitly set
+  if (styles.borderRadius !== undefined) {
+    lines.push(`${indent}lv_obj_set_style_radius(${varName}, ${styles.borderRadius}, ${partSelector});`);
+  }
+  lines.push(`${indent}lv_obj_set_style_pad_all(${varName}, 0, ${partSelector});`);
+  return lines;
 }
 
 /**
@@ -932,42 +1026,69 @@ function generateComponentCode(
     ? getComponentVarName(`${pageName}_${component.name}`, options)
     : getComponentVarName(component.name, options);
 
+  const useOutlineFrame = needsBarOutlineFrame(component);
+  const frameVar = `${varName}_frame`;
+  const barParent = parentVar;
+
   // Comment
   if (options.generateComments) {
     lines.push(`${indent}${generateComment(`Create ${component.type}: ${component.name}`, options)}`);
   }
 
-  // Create component
-  lines.push(`${indent}${varName} = ${getCreateFunction(component.type, parentVar, options, component.props)};`);
+  if (useOutlineFrame) {
+    const frameBounds = getBarOutlineFrameBounds(component);
+    if (options.generateComments) {
+      lines.push(`${indent}${generateComment(`Square outline frame for ${component.name}`, options)}`);
+    }
+    lines.push(`${indent}${frameVar} = lv_obj_create(${parentVar});`);
+    lines.push(...generateSquareBarFrameBorderCode(frameVar, component.styles.default, options));
+    lines.push(...generateAbsoluteObjSetup(frameVar, options));
+    lines.push(`${indent}lv_obj_set_pos(${frameVar}, ${frameBounds.x}, ${frameBounds.y});`);
+    lines.push(
+      `${indent}lv_obj_set_size(${frameVar}, ${frameBounds.w}, ${frameBounds.h});`,
+    );
+    lines.push(`${indent}lv_obj_move_background(${frameVar});`);
+  }
 
-  // Position and size
+  // Create component
+  lines.push(`${indent}${varName} = ${getCreateFunction(component.type, barParent, options, component.props)};`);
+
+  if (useOutlineFrame) {
+    lines.push(...generateAbsoluteObjSetup(varName, options));
+  }
+
+  // Position and size — bar stays at design coordinates (outline is a sibling, not parent)
   lines.push(`${indent}lv_obj_set_pos(${varName}, ${component.x}, ${component.y});`);
 
-  // Width with mode support
-  if (component.widthMode === 'content') {
-    lines.push(`${indent}lv_obj_set_width(${varName}, LV_SIZE_CONTENT);`);
-  } else if (component.widthMode === 'percent') {
-    lines.push(`${indent}lv_obj_set_width(${varName}, lv_pct(${component.width}));`);
+  if (useOutlineFrame) {
+    lines.push(`${indent}lv_obj_set_size(${varName}, ${component.width}, ${component.height});`);
   } else {
-    // Height with mode support — check if we can use set_size for both px
-    if (component.heightMode === 'content') {
-      lines.push(`${indent}lv_obj_set_width(${varName}, ${component.width});`);
-      lines.push(`${indent}lv_obj_set_height(${varName}, LV_SIZE_CONTENT);`);
-    } else if (component.heightMode === 'percent') {
-      lines.push(`${indent}lv_obj_set_width(${varName}, ${component.width});`);
-      lines.push(`${indent}lv_obj_set_height(${varName}, lv_pct(${component.height}));`);
+    // Width with mode support
+    if (component.widthMode === 'content') {
+      lines.push(`${indent}lv_obj_set_width(${varName}, LV_SIZE_CONTENT);`);
+    } else if (component.widthMode === 'percent') {
+      lines.push(`${indent}lv_obj_set_width(${varName}, lv_pct(${component.width}));`);
     } else {
-      lines.push(`${indent}lv_obj_set_size(${varName}, ${component.width}, ${component.height});`);
+      // Height with mode support — check if we can use set_size for both px
+      if (component.heightMode === 'content') {
+        lines.push(`${indent}lv_obj_set_width(${varName}, ${component.width});`);
+        lines.push(`${indent}lv_obj_set_height(${varName}, LV_SIZE_CONTENT);`);
+      } else if (component.heightMode === 'percent') {
+        lines.push(`${indent}lv_obj_set_width(${varName}, ${component.width});`);
+        lines.push(`${indent}lv_obj_set_height(${varName}, lv_pct(${component.height}));`);
+      } else {
+        lines.push(`${indent}lv_obj_set_size(${varName}, ${component.width}, ${component.height});`);
+      }
     }
-  }
-  // If width was non-px, still need to emit height separately
-  if (component.widthMode === 'content' || component.widthMode === 'percent') {
-    if (component.heightMode === 'content') {
-      lines.push(`${indent}lv_obj_set_height(${varName}, LV_SIZE_CONTENT);`);
-    } else if (component.heightMode === 'percent') {
-      lines.push(`${indent}lv_obj_set_height(${varName}, lv_pct(${component.height}));`);
-    } else {
-      lines.push(`${indent}lv_obj_set_height(${varName}, ${component.height});`);
+    // If width was non-px, still need to emit height separately
+    if (component.widthMode === 'content' || component.widthMode === 'percent') {
+      if (component.heightMode === 'content') {
+        lines.push(`${indent}lv_obj_set_height(${varName}, LV_SIZE_CONTENT);`);
+      } else if (component.heightMode === 'percent') {
+        lines.push(`${indent}lv_obj_set_height(${varName}, lv_pct(${component.height}));`);
+      } else {
+        lines.push(`${indent}lv_obj_set_height(${varName}, ${component.height});`);
+      }
     }
   }
 
@@ -997,6 +1118,9 @@ function generateComponentCode(
     const f = component.flags;
     if (f.hidden) {
       lines.push(`${indent}lv_obj_add_flag(${varName}, LV_OBJ_FLAG_HIDDEN);`);
+      if (useOutlineFrame) {
+        lines.push(`${indent}lv_obj_add_flag(${frameVar}, LV_OBJ_FLAG_HIDDEN);`);
+      }
     }
     if (f.disabled) {
       lines.push(`${indent}lv_obj_add_state(${varName}, LV_STATE_DISABLED);`);
@@ -1047,15 +1171,16 @@ function generateComponentCode(
   }
 
   // Styles
-  const styleLines = generateStyleCode(varName, component.styles.default, options, '0', defaultFont, defaultFontSize);
+  const styleLines = generateStyleCode(varName, component.styles.default, options, '0', defaultFont, defaultFontSize, useOutlineFrame);
   lines.push(...styleLines);
   if (component.type === 'bar') {
     lines.push(...generateBarIndicatorStyleCode(varName, component.styles.default, options));
+    lines.push(`${indent}lv_obj_set_style_pad_all(${varName}, 0, 0);`);
   }
 
   // Pressed state styles
   if (component.styles.pressed) {
-    const pressedLines = generateStyleCode(varName, component.styles.pressed, options, 'LV_STATE_PRESSED', defaultFont, defaultFontSize);
+    const pressedLines = generateStyleCode(varName, component.styles.pressed, options, 'LV_STATE_PRESSED', defaultFont, defaultFontSize, useOutlineFrame);
     lines.push(...pressedLines);
     if (component.type === 'bar' && component.styles.pressed.indicatorColor) {
       lines.push(...generateBarIndicatorStyleCode(varName, component.styles.pressed, options, 'LV_STATE_PRESSED'));
@@ -1064,7 +1189,7 @@ function generateComponentCode(
 
   // Focused state styles
   if (component.styles.focused) {
-    const focusedLines = generateStyleCode(varName, component.styles.focused, options, 'LV_STATE_FOCUSED', defaultFont, defaultFontSize);
+    const focusedLines = generateStyleCode(varName, component.styles.focused, options, 'LV_STATE_FOCUSED', defaultFont, defaultFontSize, useOutlineFrame);
     lines.push(...focusedLines);
     if (component.type === 'bar' && component.styles.focused.indicatorColor) {
       lines.push(...generateBarIndicatorStyleCode(varName, component.styles.focused, options, 'LV_STATE_FOCUSED'));
@@ -1073,7 +1198,7 @@ function generateComponentCode(
 
   // Disabled state styles
   if (component.styles.disabled) {
-    const disabledLines = generateStyleCode(varName, component.styles.disabled, options, 'LV_STATE_DISABLED', defaultFont, defaultFontSize);
+    const disabledLines = generateStyleCode(varName, component.styles.disabled, options, 'LV_STATE_DISABLED', defaultFont, defaultFontSize, useOutlineFrame);
     lines.push(...disabledLines);
     if (component.type === 'bar' && component.styles.disabled.indicatorColor) {
       lines.push(...generateBarIndicatorStyleCode(varName, component.styles.disabled, options, 'LV_STATE_DISABLED'));
@@ -1097,6 +1222,9 @@ function generateComponentCode(
   // Visibility
   if (!component.visible) {
     lines.push(`${indent}lv_obj_add_flag(${varName}, LV_OBJ_FLAG_HIDDEN);`);
+    if (useOutlineFrame) {
+      lines.push(`${indent}lv_obj_add_flag(${frameVar}, LV_OBJ_FLAG_HIDDEN);`);
+    }
   }
 
   lines.push('');
@@ -1178,7 +1306,12 @@ function generateScreenInitFunc(
     lines.push(`${indent}${generateComment(`Create screen: ${page.name}`, options)}`);
   }
   lines.push(`${indent}${screenVar} = lv_obj_create(NULL);`);
-  
+
+  if (options.lvglVersion === '9') {
+    lines.push(`${indent}lv_obj_set_layout(${screenVar}, LV_LAYOUT_NONE);`);
+    lines.push(`${indent}lv_obj_remove_flag(${screenVar}, LV_OBJ_FLAG_SCROLLABLE);`);
+  }
+
   // Screen background color
   if (page.backgroundColor) {
     lines.push(`${indent}lv_obj_set_style_bg_color(${screenVar}, ${colorToLvgl(page.backgroundColor)}, 0);`);
@@ -1472,6 +1605,9 @@ export function generateUiSource(
         ? getComponentVarName(`${pageName}_${comp.name}`, options)
         : getComponentVarName(comp.name, options);
       lines.push(`lv_obj_t *${varName};`);
+      if (needsBarOutlineFrame(comp)) {
+        lines.push(`lv_obj_t *${varName}_frame;`);
+      }
     }
     lines.push('');
   }

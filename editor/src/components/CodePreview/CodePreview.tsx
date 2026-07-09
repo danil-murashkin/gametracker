@@ -6,7 +6,7 @@ import { useLogicEditorStore } from '../LogicEditor';
 import { useResourceStore } from '../../resources/resourceStore';
 import { useAppStore } from '../../store/appStore';
 import { useProjectStore } from '../../store/projectStore';
-import { generateCode, getGeneratedFileNames } from '../../codegen/generator';
+import { generateCode, getGeneratedFileNames, collectGeneratedExportFiles, exportGeneratedCodeToDirectory } from '../../codegen/generator';
 import type { CodeGenOptions, GeneratedCode } from '../../codegen/types';
 import { toast } from '../Toast';
 import './CodePreview.css';
@@ -65,60 +65,67 @@ const CodePreview: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([currentCode], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = selectedFile;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success(`${selectedFile} downloaded`);
+  const handleDownload = async () => {
+    try {
+      const result = await exportGeneratedCodeToDirectory({ [selectedFile]: currentCode });
+      if (result === 'saved') {
+        toast.success(`${selectedFile} saved`);
+      } else if (result === 'cancelled') {
+        return;
+      } else {
+        toast.success(`${selectedFile} downloaded`);
+      }
+    } catch {
+      toast.error('Save failed');
+    }
   };
 
   const handleDownloadAll = async () => {
     if (!generatedCode) return;
-    
+
     try {
-      // Create a simple zip-like download by downloading each file
-      for (const [fileName, content] of Object.entries(generatedCode)) {
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        // Small delay between downloads
-        await new Promise(resolve => setTimeout(resolve, 100));
+      const files = await collectGeneratedExportFiles(
+        pages,
+        codeGenOptions,
+        logicGraphs,
+        currentTheme,
+        imageResources,
+        fontResources,
+        projectDefaultFont,
+        projectDefaultFontSize,
+        projectUseBuiltinSymbols,
+        projectSymbolFont,
+      );
+      const result = await exportGeneratedCodeToDirectory(files);
+      if (result === 'saved') {
+        toast.success(`Saved ${Object.keys(files).length} files`);
+      } else if (result === 'cancelled') {
+        return;
+      } else {
+        toast.success('All files downloaded');
       }
-      toast.success('All files downloaded');
     } catch {
-      toast.error('Download failed');
+      toast.error('Save failed');
     }
   };
 
   return (
-    <div className="code-preview">
-      <div className="code-preview-header">
-        <div className="code-preview-tabs">
+    <div className="generated-code-panel">
+      <div className="generated-code-panel-header">
+        <div className="generated-code-panel-tabs">
           {fileNames.map(fileName => (
             <button
               key={fileName}
-              className={`code-tab ${selectedFile === fileName ? 'active' : ''}`}
+              className={`generated-code-tab ${selectedFile === fileName ? 'active' : ''}`}
               onClick={() => setSelectedFile(fileName)}
             >
               {fileName}
             </button>
           ))}
         </div>
-        <div className="code-preview-actions">
+        <div className="generated-code-panel-actions">
           <select
-            className="code-version-select"
+            className="generated-code-version-select"
             value={lvglVersion}
             onChange={(e) => setLvglVersion(e.target.value as CodeGenOptions['lvglVersion'])}
             title="LVGL Version"
@@ -126,19 +133,19 @@ const CodePreview: React.FC = () => {
             <option value="8">LVGL v8</option>
             <option value="9">LVGL v9</option>
           </select>
-          <button className="code-action-btn" onClick={handleCopy} title="Copy code">
+          <button className="generated-code-action-btn" onClick={handleCopy} title="Copy code">
             📋 Copy
           </button>
-          <button className="code-action-btn" onClick={handleDownload} title="Download current file">
+          <button className="generated-code-action-btn" onClick={handleDownload} title="Save current file to folder">
             💾 Download
           </button>
-          <button className="code-action-btn primary" onClick={handleDownloadAll} title="Download all files">
-            📦 AllDownload
+          <button className="generated-code-action-btn primary" onClick={handleDownloadAll} title="Save all files to folder">
+            📁 Download All
           </button>
         </div>
       </div>
-      <div className="code-preview-editor">
-        <div className="code-preview-editor-inner">
+      <div className="generated-code-panel-editor">
+        <div className="generated-code-panel-editor-inner">
           <Editor
             width="100%"
             height="100%"
@@ -162,20 +169,20 @@ const CodePreview: React.FC = () => {
             }}
             onMount={() => setIsLoading(false)}
             loading={
-              <div className="code-preview-loading">
+              <div className="generated-code-panel-loading">
                 <span>Loading editor...</span>
               </div>
             }
           />
         </div>
         {isLoading && (
-          <div className="code-preview-loading">
+          <div className="generated-code-panel-loading">
             <span>Loading editor...</span>
           </div>
         )}
       </div>
-      <div className="code-preview-footer">
-        <span className="code-stats">
+      <div className="generated-code-panel-footer">
+        <span className="generated-code-stats">
           {currentCode.split('\n').length} Lines | {new Blob([currentCode]).size} bytes
         </span>
       </div>

@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       compilePreviewModulePlugin(enableCompilePreview),
-      ...(enableCompilePreview ? [compilePlugin()] : []),
+      compilePlugin(),
     ],
     test: {
       environment: 'jsdom',

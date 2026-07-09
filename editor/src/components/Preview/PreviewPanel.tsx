@@ -299,8 +299,8 @@ const PreviewPanel: React.FC = () => {
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
 
     const findAtPoint = (comps: LvglComponent[], ox = 0, oy = 0): LvglComponent | null => {
       for (let i = comps.length - 1; i >= 0; i--) {
@@ -327,7 +327,7 @@ const PreviewPanel: React.FC = () => {
         }
       }
     }
-  }, [components, pages, scale]);
+  }, [components, pages, canvas.width, canvas.height]);
 
   // Render components to canvas
   useEffect(() => {
@@ -648,9 +648,10 @@ const PreviewPanel: React.FC = () => {
         const olColor = styles.outlineColor || '#000';
         const olWidth = styles.outlineWidth;
         const olPad = styles.outlinePad || 0;
+        const outlineRadius = comp.type === 'bar' ? (styles.borderRadius ?? 0) : borderRadius;
         ctx.strokeStyle = olColor;
         ctx.lineWidth = olWidth;
-        roundRect(ctx, x - olPad - olWidth / 2, y - olPad - olWidth / 2, w + (olPad + olWidth / 2) * 2, h + (olPad + olWidth / 2) * 2, borderRadius);
+        roundRect(ctx, x - olPad - olWidth / 2, y - olPad - olWidth / 2, w + (olPad + olWidth / 2) * 2, h + (olPad + olWidth / 2) * 2, outlineRadius);
         ctx.stroke();
       }
 
@@ -704,8 +705,8 @@ const PreviewPanel: React.FC = () => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
 
     // Find component at point
     const findAtPoint = (comps: LvglComponent[], offsetX = 0, offsetY = 0): string | null => {
@@ -742,16 +743,19 @@ const PreviewPanel: React.FC = () => {
             <button className="preview-btn" onClick={pauseAnimation} title="Paused">⏸</button>
           )}
           <button className="preview-btn" onClick={resetAnimation} title="Reset" disabled={!animPlaying && animStates.size === 0}>⏹</button>
-          <span className="preview-divider" />
+          <span className="preview-zoom-divider" />
           <button onClick={() => setScale(s => Math.max(0.5, s - 0.25))}>−</button>
-          <span>{Math.round(scale * 100)}%</span>
+          <span className="preview-zoom-label">{Math.round(scale * 100)}%</span>
           <button onClick={() => setScale(s => Math.min(2, s + 0.25))}>+</button>
         </div>
       </div>
       <div className="preview-content">
-        <div 
+        <div
           className="preview-canvas-wrapper"
-          style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
+          style={{
+            width: canvas.width * scale,
+            height: canvas.height * scale,
+          }}
         >
           <canvas
             ref={canvasRef}
@@ -760,7 +764,7 @@ const PreviewPanel: React.FC = () => {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onClick={handleCanvasClick}
-            style={{ cursor: hoveredComponent ? 'pointer' : 'default' }}
+            style={{ cursor: hoveredComponent ? 'pointer' : 'default', width: '100%', height: '100%' }}
           />
         </div>
       </div>

@@ -93,7 +93,7 @@ export const DEFAULT_CODEGEN_OPTIONS: CodeGenOptions = {
 // ---------------------------------------------------------------------------
 
 const DB_NAME = 'lvgl-editor-projects';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
@@ -111,10 +111,18 @@ function getDB(): Promise<IDBPDatabase> {
           const store = db.createObjectStore('projectResources', { keyPath: 'id' });
           store.createIndex('byProject', 'projectId');
         }
+        if (!db.objectStoreNames.contains('projectFileHandles')) {
+          db.createObjectStore('projectFileHandles', { keyPath: 'projectId' });
+        }
       },
     });
   }
   return dbPromise;
+}
+
+interface ProjectFileHandleEntry {
+  projectId: string;
+  handle: FileSystemFileHandle;
 }
 
 // ---------------------------------------------------------------------------
@@ -171,6 +179,7 @@ async function dbDeleteProject(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('projects', id);
   await db.delete('projectData', id);
+  await db.delete('projectFileHandles', id);
   // Delete all resources for this project
   const resources = await db.getAllFromIndex('projectResources', 'byProject', id);
   const tx = db.transaction('projectResources', 'readwrite');
@@ -178,6 +187,17 @@ async function dbDeleteProject(id: string): Promise<void> {
     await tx.store.delete(r.id);
   }
   await tx.done;
+}
+
+async function dbGetProjectFileHandle(projectId: string): Promise<FileSystemFileHandle | undefined> {
+  const db = await getDB();
+  const entry = await db.get('projectFileHandles', projectId) as ProjectFileHandleEntry | undefined;
+  return entry?.handle;
+}
+
+async function dbSetProjectFileHandle(projectId: string, handle: FileSystemFileHandle): Promise<void> {
+  const db = await getDB();
+  await db.put('projectFileHandles', { projectId, handle } satisfies ProjectFileHandleEntry);
 }
 
 async function dbListProjects(): Promise<ProjectConfig[]> {
@@ -205,6 +225,8 @@ interface ProjectStoreState {
   // Load / save project data (pages, logic, resources)
   loadProjectData: (id: string) => Promise<{ data: ProjectData; images: ImageResource[]; fonts: FontResource[] }>;
   saveProjectData: (id: string, pages: Page[], logicGraphs: LogicGraph[], images: ImageResource[], fonts: FontResource[]) => Promise<void>;
+  getProjectFileHandle: (id: string) => Promise<FileSystemFileHandle | undefined>;
+  setProjectFileHandle: (id: string, handle: FileSystemFileHandle) => Promise<void>;
 
   // Import / export
   exportProject: (id: string) => Promise<ProjectFile>;
@@ -297,6 +319,12 @@ export const useProjectStore = create<ProjectStoreState>((set, get) => ({
     }
     await dbUpdateProjectData({ projectId: id, pages, logicGraphs, variables: [] });
     await get().syncResources(id, images, fonts);
+  },
+
+  getProjectFileHandle: async (id) => dbGetProjectFileHandle(id),
+
+  setProjectFileHandle: async (id, handle) => {
+    await dbSetProjectFileHandle(id, handle);
   },
 
   syncResources: async (projectId, images, fonts) => {

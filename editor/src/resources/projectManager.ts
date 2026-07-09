@@ -100,58 +100,114 @@ function migrateProject(project: ProjectFile): ProjectFile {
   };
 }
 
+export type SaveProjectResult = 'saved' | 'cancelled' | 'unsupported';
+
+type ProjectFilePickerHandle = FileSystemFileHandle & {
+  createWritable: () => Promise<{
+    write: (data: Blob) => Promise<void>;
+    close: () => Promise<void>;
+  }>;
+  queryPermission?: (descriptor: { mode: 'readwrite' }) => Promise<PermissionState>;
+  requestPermission?: (descriptor: { mode: 'readwrite' }) => Promise<PermissionState>;
+};
+
+function projectFileName(project: ProjectFile): string {
+  return `${project.name || 'project'}.lvgl.json`;
+}
+
+function downloadProjectFallback(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function ensureWritePermission(handle: ProjectFilePickerHandle): Promise<boolean> {
+  if (!handle.queryPermission || !handle.requestPermission) {
+    return true;
+  }
+  const current = await handle.queryPermission({ mode: 'readwrite' });
+  if (current === 'granted') return true;
+  const requested = await handle.requestPermission({ mode: 'readwrite' });
+  return requested === 'granted';
+}
+
+async function writeProjectBlob(
+  handle: ProjectFilePickerHandle,
+  blob: Blob,
+): Promise<void> {
+  const writable = await handle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+}
+
 /**
- * Download project as JSON file
+ * Save project JSON to disk. Reuses an existing file handle when provided;
+ * otherwise opens the native Save dialog.
  */
-export function downloadProject(project: ProjectFile): void {
+export async function saveProjectToFile(
+  project: ProjectFile,
+  options: {
+    existingHandle?: FileSystemFileHandle | null;
+    forcePicker?: boolean;
+  } = {},
+): Promise<{ result: SaveProjectResult; handle?: FileSystemFileHandle }> {
   const json = serializeProject(project);
   const blob = new Blob([json], { type: 'application/json' });
+  const fileName = projectFileName(project);
 
-  const fileName = `${project.name || 'project'}.lvgl.json`;
+  const w = window as Window & {
+    showSaveFilePicker?: (options?: unknown) => Promise<FileSystemFileHandle>;
+  };
 
-  // Prefer the File System Access API when available (shows native "Save As" dialog).
-  // Fallback to classic anchor download.
-  void (async () => {
-    try {
-      const w = window as unknown as {
-        showSaveFilePicker?: (options?: unknown) => Promise<{
-          createWritable: () => Promise<{
-            write: (data: Blob) => Promise<void>;
-            close: () => Promise<void>;
-          }>;
-        }>;
-      };
+  try {
+    let handle = options.existingHandle ?? null;
 
-      if (typeof w.showSaveFilePicker === 'function') {
-        const handle = await w.showSaveFilePicker({
-          suggestedName: fileName,
-          types: [
-            {
-              description: 'LVGL Editor Project',
-              accept: { 'application/json': ['.lvgl.json', '.json'] },
-            },
-          ],
-        });
-
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        return;
+    if (!options.forcePicker && handle) {
+      const allowed = await ensureWritePermission(handle as ProjectFilePickerHandle);
+      if (!allowed) {
+        handle = null;
       }
-    } catch (e) {
-      // User cancel / unsupported / permission issue -> fallback below.
-      console.warn('Save picker failed, falling back to download:', e);
     }
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  })();
+    if (options.forcePicker || !handle) {
+      if (typeof w.showSaveFilePicker !== 'function') {
+        downloadProjectFallback(blob, fileName);
+        return { result: 'unsupported' };
+      }
+      handle = await w.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: 'LVGL Editor Project',
+            accept: { 'application/json': ['.lvgl.json', '.json'] },
+          },
+        ],
+      });
+    }
+
+    await writeProjectBlob(handle as ProjectFilePickerHandle, blob);
+    return { result: 'saved', handle };
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      return { result: 'cancelled' };
+    }
+    console.warn('Save picker failed, falling back to download:', e);
+    downloadProjectFallback(blob, fileName);
+    return { result: 'unsupported' };
+  }
+}
+
+/**
+ * Export project as JSON file (always prompts for destination).
+ */
+export async function downloadProject(project: ProjectFile): Promise<SaveProjectResult> {
+  const { result } = await saveProjectToFile(project, { forcePicker: true });
+  return result;
 }
 
 /**

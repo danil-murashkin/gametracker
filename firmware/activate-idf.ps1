@@ -6,9 +6,19 @@ $ErrorActionPreference = "Stop"
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
             [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-$idfExport = "C:\esp\esp-idf\export.ps1"
-if (-not (Test-Path $idfExport)) {
-    Write-Error "ESP-IDF not found at C:\esp\esp-idf. Adjust path in activate-idf.ps1"
+$candidates = @(
+    $(if ($env:IDF_PATH) { Join-Path $env:IDF_PATH "export.ps1" }),
+    "C:\esp\esp-idf\export.ps1",
+    "C:\Espressif\frameworks\esp-idf-v5.3.2\export.ps1"
+) | Where-Object { $_ -and (Test-Path $_) }
+
+$idfExport = $candidates | Select-Object -First 1
+if (-not $idfExport) {
+    Write-Error @"
+ESP-IDF export.ps1 not found.
+Install: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/windows-setup.html
+Or run: ..\scripts\setup-esp-idf.ps1
+"@
 }
 
 . $idfExport

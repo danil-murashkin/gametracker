@@ -230,7 +230,7 @@ describe('logic timer counter (minimal test)', () => {
     expect(code['ui.h']).toContain('ui_lb_counter');
   });
 
-  it('exports generated C files for simulator/firmware handoff', () => {
+  it('exports generated C files for editor Simulator / firmware handoff', () => {
     const project = JSON.parse(readFileSync(exampleJsonPath, 'utf8'));
     const code = generateCode(
       project.pages,

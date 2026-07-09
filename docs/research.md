@@ -64,12 +64,11 @@ BE -->|"rules.json"| le
 
 | Путь                      | Роль                                                       |
 | ------------------------- | ---------------------------------------------------------- |
-| `editor/`                 | Ссылки на внешние редакторы (PicoPixel, SquareLine, …)     |
+| `editor/`                 | LVGL Editor: Design, Logic, Code, Preview, **Simulator** (WASM) |
 | `common/rules/rules.json` | Единый файл логики (симулятор читает с диска, ESP — embed) |
 | `common/logic/`           | Logic Engine (FSM) + загрузчик JSON                        |
 | `common/ui/`              | LVGL UI (демо-экран: метка + квадрат)                      |
 | `common/app/`             | Склейка logic + ui                                         |
-| `simulator/`              | LVGL 8.3 + SDL2, mock HAL (клавиатура = энкодер)           |
 | `firmware/`               | ESP-IDF, ST7789, тот же common-код                         |
 
 
@@ -97,18 +96,11 @@ BE -->|"rules.json"| le
 
 Отредактируйте [common/rules/rules.json](../common/rules/rules.json) вручную или во внешнем JSON-редакторе. Формат и ссылки на инструменты: [editor/README.md](../editor/README.md).
 
-### 2. Симулятор (ПК)
+### 2. Симулятор (браузер)
 
-Требуется: CMake 3.16+, компилятор C, Git (для FetchContent).
+Вкладка **Simulator** в [`editor/`](../editor/): `cd editor` → `.\lvgl-editor-start.ps1` → http://localhost:8083.
 
-```powershell
-cd simulator
-cmake -B build -G Ninja
-cmake --build build
-.\build\simulator.exe ..\common\rules\rules.json
-```
-
-Управление: стрелки = энкодер, Space/Enter = нажатие.
+Компилируется и запускается тот же сгенерированный C (Emscripten + LVGL). Управление: клик по canvas; GPIO: ↑/+ = value_1, ↓/− = value_2.
 
 ### 3. Прошивка (ESP32)
 
@@ -118,7 +110,7 @@ cd firmware
 idf.py build flash monitor
 ```
 
-На плате без энкодера отображается **начальное состояние** из `rules.json`. Полное управление — в симуляторе.
+На плате без энкодера отображается **начальное состояние** из `rules.json`. Полное управление — в **Simulator** (редактор) или на устройстве.
 
 После изменения `common/rules/rules.json` пересоберите прошивку (`rules.json` вшивается через `EMBED_FILES`).
 
@@ -129,7 +121,7 @@ Blockly (editor) ──► rules.json
                          │
          ┌───────────────┴───────────────┐
          ▼                               ▼
-   simulator (file)              firmware (embed)
+   editor Simulator (WASM)        firmware (embed)
          │                               │
          └─► rules_loader ─► logic_engine ─► ui_demo
                          ▲
@@ -144,19 +136,7 @@ UI в `common/ui/ui_demo.c` — ручной аналог экспорта PicoP
 
 ## Симулятор и редакторы
 
-**Редакторы (внешние):** UI — [PicoPixel](https://picopixel.io/) или [SquareLine Studio](https://squareline.io/); логика — `common/rules/rules.json`. Подробно: [editor/README.md](../editor/README.md).
-
-**Симулятор (LVGL + SDL):**
-
-```powershell
-cd simulator
-. .\activate-build.ps1
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-.\build\simulator.exe
-```
-
-См. [simulator/README.md](../simulator/README.md) — если `cmake` не найден, нужен MinGW (`winget install BrechtSanders.WinLibs.POSIX.MSVCRT`).
+**Редактор:** UI и логика в [`editor/`](../editor/) (форк IoTSharp/lvgl-editor). Симуляция — вкладка **Simulator** (WASM в браузере). Подробно: [editor/README.md](../editor/README.md).
 
 ## Сборка и прошивка
 
@@ -214,7 +194,7 @@ Windows: укажите COM-порт платы (Device Manager → Ports), на
 
 ## Софт
 
-- **UI:** [LVGL](https://github.com/lvgl/lvgl) 8.3 — embedded + PC-симулятор (SDL)
+- **UI:** [LVGL](https://github.com/lvgl/lvgl) 8.3 — embedded; симуляция в браузере (Emscripten, вкладка Simulator в `editor/`)
 - **UI editor:** [PicoPixel](https://picopixel.io/) — design time
 - **Logic:** `rules.json` (редактирование вручную или внешние инструменты — см. [editor/README.md](../editor/README.md))
 - **LoRa:** [libdriver/llcc68](https://github.com/libdriver/llcc68) — драйвер для MCU (в симуляторе — mock)

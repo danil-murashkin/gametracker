@@ -155,6 +155,60 @@ describe('generateUiSource', () => {
       expect(result).toContain('lv_obj_set_style_bg_opa(ui_health, LV_OPA_COVER, LV_PART_INDICATOR);');
     });
 
+    it('wraps square outlined bar in frame for sharp outline corners', () => {
+      const bar = createComponent('bar', {
+        name: 'health',
+        x: 60,
+        y: 230,
+        width: 120,
+        height: 10,
+        props: { min: 0, max: 100, value: 50 },
+        styles: {
+          default: {
+            bgColor: '#1a3d1a',
+            borderRadius: 0,
+            indicatorColor: '#00FF00',
+            outlineWidth: 2,
+            outlineColor: '#00FF00',
+            outlinePad: 2,
+          },
+        },
+      });
+      const pages = [createPage({ name: 'main', components: [bar] })];
+      const result = generateUiSource(pages, defaultOptions());
+      expect(result).toContain('lv_obj_set_layout(ui_screen_main, LV_LAYOUT_NONE);');
+      expect(result).toContain('ui_health_frame = lv_obj_create(ui_screen_main);');
+      expect(result).toContain('lv_obj_set_pos(ui_health_frame, 56, 226);');
+      expect(result).toContain('lv_obj_set_size(ui_health_frame, 128, 18);');
+      expect(result).toContain('lv_obj_set_style_border_width(ui_health_frame, 2, 0);');
+      expect(result).toContain('lv_obj_set_style_border_color(ui_health_frame, lv_color_hex(0x00FF00), 0);');
+      expect(result).toContain('lv_obj_add_flag(ui_health_frame, LV_OBJ_FLAG_FLOATING);');
+      expect(result).toContain('lv_obj_move_background(ui_health_frame);');
+      expect(result).toContain('lv_obj_set_pos(ui_health, 60, 230);');
+      expect(result).toContain('ui_health = lv_bar_create(ui_screen_main);');
+      expect(result).toContain('lv_obj_add_flag(ui_health, LV_OBJ_FLAG_FLOATING);');
+      expect(result).not.toContain('lv_obj_set_style_outline_width(ui_health_frame');
+      expect(result).not.toContain('lv_obj_set_style_outline_width(ui_health,');
+    });
+
+    it('applies borderRadius to bar indicator part (not just track)', () => {
+      const bar = createComponent('bar', {
+        name: 'health',
+        props: { min: 0, max: 100, value: 50 },
+        styles: {
+          default: {
+            bgColor: '#1a3d1a',
+            borderRadius: 0,
+            indicatorColor: '#00FF00',
+          },
+        },
+      });
+      const pages = [createPage({ name: 'main', components: [bar] })];
+      const result = generateUiSource(pages, defaultOptions());
+      expect(result).toContain('lv_obj_set_style_radius(ui_health, 0, 0);');
+      expect(result).toContain('lv_obj_set_style_radius(ui_health, 0, LV_PART_INDICATOR);');
+    });
+
     it('creates arc with angles and mode', () => {
       const arc = createComponent('arc', {
         name: 'dial',

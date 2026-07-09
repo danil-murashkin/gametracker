@@ -1,4 +1,4 @@
-# Platform-independent sources (firmware + simulator).
+# Platform-independent sources (firmware).
 # Included from both CMakeLists — keep in sync.
 
 set(COMMON_APP_SOURCES

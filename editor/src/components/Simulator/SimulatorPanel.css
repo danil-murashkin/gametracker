@@ -1,0 +1,290 @@
+.simulator-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  color: #333;
+}
+
+.simulator-panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.simulator-panel-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.simulator-panel-status {
+  font-size: 13px;
+  min-width: 0;
+  color: #333;
+}
+
+.simulator-panel-status--ready,
+.simulator-panel-status--done {
+  color: #00796b;
+}
+
+.simulator-panel-status--loading,
+.simulator-panel-status--compiling,
+.simulator-panel-status--running {
+  color: #b8860b;
+}
+
+.simulator-panel-status--error {
+  color: #c62828;
+}
+
+.simulator-panel-status--idle {
+  color: #666;
+}
+
+.simulator-panel-gpio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.simulator-panel-gpio-state {
+  font-size: 12px;
+  color: #444;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+}
+
+.simulator-panel-gpio-hint {
+  font-size: 12px;
+  color: #666;
+}
+
+.simulator-panel-playback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.simulator-panel-play-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.simulator-panel-play-btn:hover:not(:disabled) {
+  background: #e3f2fd;
+  border-color: #2196f3;
+}
+
+.simulator-panel-play-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.simulator-panel-zoom-divider {
+  width: 1px;
+  height: 20px;
+  background: #ddd;
+  flex-shrink: 0;
+}
+
+.simulator-panel-zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.simulator-panel-zoom-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.simulator-panel-zoom-btn:hover {
+  background: #f0f0f0;
+}
+
+.simulator-panel-zoom-label {
+  font-size: 12px;
+  color: #666;
+  min-width: 40px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.simulator-panel-btn {
+  padding: 4px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.simulator-panel-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.simulator-panel-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.simulator-panel-btn.active {
+  border-color: #00796b;
+  color: #00796b;
+  background: #e8f5f0;
+}
+
+.simulator-panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 24px;
+  gap: 16px;
+  min-height: 0;
+  background: #e8e8e8;
+}
+
+.simulator-panel-screen {
+  position: relative;
+  flex-shrink: 0;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: #000;
+  overflow: hidden;
+}
+
+.simulator-panel-canvas {
+  display: block;
+  background: #000;
+}
+
+.simulator-panel-canvas.interactive {
+  cursor: pointer;
+  outline: none;
+}
+
+.simulator-panel-canvas.interactive:focus {
+  box-shadow: 0 0 0 2px #00796b;
+}
+
+.simulator-panel-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.85);
+  color: #333;
+  font-size: 14px;
+  z-index: 1;
+  gap: 12px;
+}
+
+.simulator-panel-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #ddd;
+  border-top-color: #00796b;
+  border-radius: 50%;
+  animation: simulator-panel-spin 0.8s linear infinite;
+}
+
+@keyframes simulator-panel-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.simulator-panel-log {
+  max-height: 220px;
+  border-top: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.simulator-panel-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #666;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.simulator-panel-log-header button {
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.simulator-panel-log-header button:hover {
+  background: #f0f0f0;
+}
+
+.simulator-panel-log pre {
+  margin: 0;
+  padding: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow: auto;
+  max-height: 180px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #333;
+}
+
+.simulator-panel-code {
+  height: 42%;
+  min-height: 260px;
+  border-top: 1px solid #e0e0e0;
+  background: #fff;
+}

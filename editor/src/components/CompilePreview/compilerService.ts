@@ -17,6 +17,7 @@ export interface WasmRuntime {
   tick(ms: number): void;
   mouseEvent(x: number, y: number, pressed: boolean): void;
   keyEvent(key: number, pressed: boolean): void;
+  buttonEvent(button: 1 | 2, pressed: boolean): void;
   getFramebuffer(): Uint8Array | null;
   getWidth(): number;
   getHeight(): number;
@@ -181,6 +182,10 @@ async function loadEmscriptenModule(
     key: number,
     pressed: number,
   ) => void;
+  const appButtonEvent = module.cwrap('app_button_event', null, ['number', 'number']) as (
+    button: number,
+    pressed: number,
+  ) => void;
   const getFb = module.cwrap('wasi_get_framebuffer', 'number', []) as () => number;
   const getFbReady = module.cwrap('wasi_get_fb_ready', 'number', []) as () => number;
   const clearFbReady = module.cwrap('wasi_clear_fb_ready', null, []) as () => void;
@@ -205,6 +210,11 @@ async function loadEmscriptenModule(
     keyEvent(key: number, pressed: boolean) {
       if (destroyed) return;
       appKeyEvent(key, pressed ? 1 : 0);
+    },
+
+    buttonEvent(button: 1 | 2, pressed: boolean) {
+      if (destroyed) return;
+      appButtonEvent(button, pressed ? 1 : 0);
     },
 
     getFramebuffer(): Uint8Array | null {

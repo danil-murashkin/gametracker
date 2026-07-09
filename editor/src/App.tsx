@@ -22,7 +22,7 @@ import Modal, { modal } from './components/Modal';
 import CodePreview from './components/CodePreview';
 import { LogicEditor } from './components/LogicEditor';
 import PreviewPanel from './components/Preview';
-import WasmPreview from './components/WasmPreview';
+import SimulatorPanel from './components/Simulator';
 import { HierarchyPanel } from './components/HierarchyPanel';
 import { ThemeSelector } from './components/ThemeSelector';
 import { ResourcePanel, useResourceStore } from './resources';
@@ -32,6 +32,7 @@ import { ProjectSettings } from './components/ProjectSettings';
 import {
   downloadProject,
   loadProjectFromFile,
+  saveProjectToFile,
 } from './resources/projectManager';
 import { useEditorStore } from './store/editorStore';
 import { useAppStore, parseFontSize } from './store/appStore';
@@ -41,11 +42,84 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { getComponentDefinition } from './utils/componentDefinitions';
 import './App.css';
 
-type TabType = 'design' | 'logic' | 'code' | 'preview';
+type TabType = 'design' | 'logic' | 'code' | 'preview' | 'simulator';
+
+interface HeaderIconButtonProps {
+  variant: 'tab' | 'toolbar';
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  title?: string;
+}
+
+const HeaderIconButton: React.FC<HeaderIconButtonProps> = ({
+  variant,
+  label,
+  icon,
+  onClick,
+  active = false,
+  disabled = false,
+  title,
+}) => (
+  <button
+    type="button"
+    className={`${variant === 'tab' ? 'tab-btn' : 'toolbar-button'}${active ? ' active' : ''}${disabled ? ' disabled' : ''}`}
+    onClick={onClick}
+    disabled={disabled}
+    title={title ?? label}
+  >
+    <span className={variant === 'tab' ? 'tab-btn-icon' : 'toolbar-button-icon'} aria-hidden>
+      {icon}
+    </span>
+    <span className={variant === 'tab' ? 'tab-btn-label' : 'toolbar-button-label'}>{label}</span>
+  </button>
+);
+
+const AppTabButton: React.FC<Omit<HeaderIconButtonProps, 'variant'>> = (props) => (
+  <HeaderIconButton variant="tab" {...props} />
+);
+
+const ToolbarButton: React.FC<Omit<HeaderIconButtonProps, 'variant'> & { shortcut?: string }> = ({
+  shortcut,
+  label,
+  ...props
+}) => (
+  <HeaderIconButton
+    variant="toolbar"
+    label={label}
+    title={shortcut ? `${label} (${shortcut})` : label}
+    {...props}
+  />
+);
+
+/** ESP32-style dev board icon for the Simulator tab */
+const PcbTabIcon: React.FC = () => (
+  <svg className="tab-pcb-icon" viewBox="0 0 24 24" aria-hidden>
+    <rect x="7" y="2.5" width="10" height="19" rx="1.4" fill="#2c3e50" stroke="#90a4ae" strokeWidth="1" />
+    <path d="M9 4.5h6v1.2H9z" fill="#546e7a" />
+    <path d="M10 5.2h1.2v0.4h-1.2zm2.4 0h1.2v0.4h-1.2zm2.4 0H16v0.4h-1.2z" fill="#78909c" />
+    <rect x="8.8" y="8.2" width="6.4" height="6.4" rx="0.8" fill="#455a64" stroke="#b0bec5" strokeWidth="0.5" />
+    <rect x="10.2" y="9.6" width="3.6" height="3.6" rx="0.4" fill="#37474f" />
+    <rect x="5.2" y="7.5" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="5.2" y="9.2" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="5.2" y="10.9" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="5.2" y="12.6" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="5.2" y="14.3" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="17.2" y="7.5" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="17.2" y="9.2" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="17.2" y="10.9" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="17.2" y="12.6" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="17.2" y="14.3" width="1.6" height="0.75" rx="0.2" fill="#ffb300" />
+    <rect x="9.2" y="17.8" width="5.6" height="2.2" rx="0.5" fill="#cfd8dc" stroke="#90a4ae" strokeWidth="0.4" />
+    <rect x="10.8" y="18.4" width="2.4" height="1" rx="0.2" fill="#78909c" />
+  </svg>
+);
 
 const App: React.FC = () => {
   const { currentView, currentProjectId, showProjectSettings, openProject, goToProjectList, setShowProjectSettings, setLastSaveTime, setDefaultFontSize } = useAppStore();
-  const { loadProjectData, getProjectConfig, saveProjectData, exportProject, importProject } = useProjectStore();
+  const { loadProjectData, getProjectConfig, saveProjectData, exportProject, importProject, getProjectFileHandle, setProjectFileHandle } = useProjectStore();
 
   // On mount: check lastOpenProjectId
   useEffect(() => {
@@ -98,6 +172,8 @@ const App: React.FC = () => {
     saveProjectData={saveProjectData}
     exportProject={exportProject}
     importProject={importProject}
+    getProjectFileHandle={getProjectFileHandle}
+    setProjectFileHandle={setProjectFileHandle}
     loadProjectData={loadProjectData}
     getProjectConfig={getProjectConfig}
     openProject={openProject}
@@ -115,9 +191,26 @@ interface EditorViewProps {
   saveProjectData: (id: string, pages: Page[], logicGraphs: import('./components/LogicEditor/types').LogicGraph[], images: import('./resources/types').ImageResource[], fonts: import('./resources/types').FontResource[]) => Promise<void>;
   exportProject: (id: string) => Promise<import('./resources/types').ProjectFile>;
   importProject: (file: import('./resources/types').ProjectFile, name?: string) => Promise<string>;
+  getProjectFileHandle: (id: string) => Promise<FileSystemFileHandle | undefined>;
+  setProjectFileHandle: (id: string, handle: FileSystemFileHandle) => Promise<void>;
   loadProjectData: (id: string) => Promise<{ data: { pages: Page[]; logicGraphs: import('./components/LogicEditor/types').LogicGraph[] }; images: import('./resources/types').ImageResource[]; fonts: import('./resources/types').FontResource[] }>;
   getProjectConfig: (id: string) => Promise<import('./store/projectStore').ProjectConfig | undefined>;
   openProject: (id: string) => void;
+}
+
+function collectEditorSnapshot() {
+  const pages = useEditorStore.getState().pages;
+  const { images, fonts } = useResourceStore.getState();
+  const logicGraphs = useLogicEditorStore.getState().graphs;
+  return { pages, images, fonts, logicGraphs };
+}
+
+async function persistProjectSnapshot(
+  projectId: string,
+  saveProjectData: EditorViewProps['saveProjectData'],
+) {
+  const { pages, images, fonts, logicGraphs } = collectEditorSnapshot();
+  await saveProjectData(projectId, pages, logicGraphs, images, fonts);
 }
 
 const EditorView: React.FC<EditorViewProps> = ({
@@ -130,6 +223,8 @@ const EditorView: React.FC<EditorViewProps> = ({
   saveProjectData,
   exportProject,
   importProject,
+  getProjectFileHandle,
+  setProjectFileHandle,
   loadProjectData,
   getProjectConfig,
   openProject,
@@ -139,13 +234,13 @@ const EditorView: React.FC<EditorViewProps> = ({
 
   const { addComponent, pages, setPages, setCanvasSize } = useEditorStore();
   const { images, fonts, importResources } = useResourceStore();
+  const logicGraphs = useLogicEditorStore(s => s.graphs);
   const { messages, removeToast, success, error } = useToast();
 
   // UI State
   const [showResourcePanel, setShowResourcePanel] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('design');
-  const [previewMode, setPreviewMode] = useState<'simple' | 'wasm'>('simple');
   const [projectName, setProjectName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -174,8 +269,7 @@ const EditorView: React.FC<EditorViewProps> = ({
 
     const doSave = async () => {
       try {
-        const logicGraphs = useLogicEditorStore.getState().graphs;
-        await saveProjectData(currentProjectId, pages, logicGraphs, images, fonts);
+        await persistProjectSnapshot(currentProjectId, saveProjectData);
         setLastSaveTime(Date.now());
       } catch (err) {
         console.error('Auto-save failed:', err);
@@ -198,34 +292,59 @@ const EditorView: React.FC<EditorViewProps> = ({
       clearInterval(saveInterval);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [currentProjectId, pages, images, fonts, saveProjectData, setLastSaveTime]);
+  }, [currentProjectId, pages, images, fonts, logicGraphs, saveProjectData, setLastSaveTime]);
 
   // Project management handlers
   const handleSaveProject = useCallback(async () => {
     if (!currentProjectId) return;
     try {
-      const logicGraphs = useLogicEditorStore.getState().graphs;
-      await saveProjectData(currentProjectId, pages, logicGraphs, images, fonts);
+      await persistProjectSnapshot(currentProjectId, saveProjectData);
+      const project = await exportProject(currentProjectId);
+      const existingHandle = await getProjectFileHandle(currentProjectId);
+      const { result, handle } = await saveProjectToFile(project, { existingHandle });
+
+      if (result === 'cancelled') {
+        setLastSaveTime(Date.now());
+        success('Project saved locally');
+        return;
+      }
+
+      if (handle) {
+        await setProjectFileHandle(currentProjectId, handle);
+      }
+
       setLastSaveTime(Date.now());
-      success('Project saved');
+      if (result === 'saved') {
+        success('Project saved');
+      } else {
+        success('Project saved (downloaded)');
+      }
     } catch (err) {
       error('Save failed: ' + String(err));
     }
-  }, [currentProjectId, pages, images, fonts, saveProjectData, setLastSaveTime, success, error]);
+  }, [
+    currentProjectId,
+    saveProjectData,
+    exportProject,
+    getProjectFileHandle,
+    setProjectFileHandle,
+    setLastSaveTime,
+    success,
+    error,
+  ]);
 
   const handleExportProject = useCallback(async () => {
     if (!currentProjectId) return;
     try {
-      // Save first
-      const logicGraphs = useLogicEditorStore.getState().graphs;
-      await saveProjectData(currentProjectId, pages, logicGraphs, images, fonts);
+      await persistProjectSnapshot(currentProjectId, saveProjectData);
       const project = await exportProject(currentProjectId);
-      downloadProject(project);
-      success(`Project exported`);
+      const result = await downloadProject(project);
+      if (result === 'cancelled') return;
+      success('Project exported');
     } catch (err) {
       error('Export failed: ' + String(err));
     }
-  }, [currentProjectId, pages, images, fonts, saveProjectData, exportProject, success, error]);
+  }, [currentProjectId, saveProjectData, exportProject, success, error]);
 
   const handleImportProject = () => {
     fileInputRef.current?.click();
@@ -260,27 +379,23 @@ const EditorView: React.FC<EditorViewProps> = ({
 
   const handleNewProjectClick = useCallback(async () => {
     if (await modal.confirm('Creating a new project returns to the project list. The current project will be saved. Continue?')) {
-      // Save current project first
       if (currentProjectId) {
-        const logicGraphs = useLogicEditorStore.getState().graphs;
-        await saveProjectData(currentProjectId, pages, logicGraphs, images, fonts);
+        await persistProjectSnapshot(currentProjectId, saveProjectData);
       }
       goToProjectList();
     }
-  }, [currentProjectId, pages, images, fonts, saveProjectData, goToProjectList]);
+  }, [currentProjectId, saveProjectData, goToProjectList]);
 
   const handleBackToList = useCallback(async () => {
-    // Save current project first
     if (currentProjectId) {
       try {
-        const logicGraphs = useLogicEditorStore.getState().graphs;
-        await saveProjectData(currentProjectId, pages, logicGraphs, images, fonts);
+        await persistProjectSnapshot(currentProjectId, saveProjectData);
       } catch {
         // ignore
       }
     }
     goToProjectList();
-  }, [currentProjectId, pages, images, fonts, saveProjectData, goToProjectList]);
+  }, [currentProjectId, saveProjectData, goToProjectList]);
 
   // Listen for keyboard shortcut events
   useEffect(() => {
@@ -473,25 +588,14 @@ const EditorView: React.FC<EditorViewProps> = ({
       case 'preview':
         return (
           <div className="app-body full-panel">
-            <div className="preview-sub-tabs">
-              <button
-                className={`preview-sub-tab ${previewMode === 'simple' ? 'active' : ''}`}
-                onClick={() => setPreviewMode('simple')}
-              >
-                📱 Simple Preview
-              </button>
-              <button
-                className={`preview-sub-tab ${previewMode === 'wasm' ? 'active' : ''}`}
-                onClick={() => setPreviewMode('wasm')}
-              >
-                🖥️ LVGL Preview
-              </button>
-            </div>
-            <div className="preview-sub-content">
-              {previewMode === 'simple'
-                ? <PreviewPanel />
-                : <WasmPreview />}
-            </div>
+            <PreviewPanel />
+          </div>
+        );
+
+      case 'simulator':
+        return (
+          <div className="app-body full-panel">
+            <SimulatorPanel />
           </div>
         );
 
@@ -511,35 +615,41 @@ const EditorView: React.FC<EditorViewProps> = ({
           <span className="logo-text project-name-display">{projectName || 'LVGL UI Editor'}</span>
         </div>
 
-        {/* Main tabs */}
-        <div className="app-tabs">
-          <button
-            className={`tab-btn ${activeTab === 'design' ? 'active' : ''}`}
+        <div className="app-header-controls">
+          <div className="app-tabs">
+          <AppTabButton
+            active={activeTab === 'design'}
             onClick={() => setActiveTab('design')}
-          >
-            🎨 Design
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'logic' ? 'active' : ''}`}
+            label="Design"
+            icon="🎨"
+          />
+          <AppTabButton
+            active={activeTab === 'logic'}
             onClick={() => setActiveTab('logic')}
-          >
-            🔗 Logic
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'code' ? 'active' : ''}`}
+            label="Logic"
+            icon="🔗"
+          />
+          <AppTabButton
+            active={activeTab === 'code'}
             onClick={() => setActiveTab('code')}
-          >
-            💻 Code
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
+            label="Code"
+            icon="💻"
+          />
+          <AppTabButton
+            active={activeTab === 'preview'}
             onClick={() => setActiveTab('preview')}
-          >
-            📱 Preview
-          </button>
-        </div>
-
-        <div className="app-toolbar">
+            label="Preview"
+            icon="📱"
+          />
+          <AppTabButton
+            active={activeTab === 'simulator'}
+            onClick={() => setActiveTab('simulator')}
+            label="Simulator"
+            icon={<PcbTabIcon />}
+          />
+          </div>
+          <div className="toolbar-divider header-controls-divider" />
+          <div className="app-toolbar">
           <ToolbarButton icon="💾" label="Save" onClick={handleSaveProject} shortcut="Ctrl+S" />
           <ToolbarButton icon="📤" label="Export" onClick={handleExportProject} />
           <ToolbarButton icon="📥" label="Import" onClick={handleImportProject} />
@@ -549,7 +659,7 @@ const EditorView: React.FC<EditorViewProps> = ({
           <div className="toolbar-divider" />
           <ToolbarButton
             icon="📦"
-            label="Resources"
+            label="Assets"
             onClick={() => setShowResourcePanel(!showResourcePanel)}
             active={showResourcePanel}
           />
@@ -557,16 +667,18 @@ const EditorView: React.FC<EditorViewProps> = ({
             icon="⚙️"
             label="Settings"
             onClick={() => setShowProjectSettings(true)}
+            active={showProjectSettings}
           />
-          <div className="toolbar-divider" />
-          <ThemeSelector />
-          <div className="toolbar-divider" />
           <ToolbarButton
             icon="❓"
             label="Help"
             onClick={() => setShowHelpPanel(true)}
+            active={showHelpPanel}
             shortcut="F1"
           />
+          <div className="toolbar-divider" />
+          <ThemeSelector />
+          </div>
         </div>
         <input
           ref={fileInputRef}
@@ -595,27 +707,5 @@ const EditorView: React.FC<EditorViewProps> = ({
     </div>
   );
 };
-
-// Toolbar button component
-interface ToolbarButtonProps {
-  icon: string;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  active?: boolean;
-  shortcut?: string;
-}
-
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ icon, label, onClick, disabled, active, shortcut }) => (
-  <button
-    className={`toolbar-button ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`}
-    onClick={onClick}
-    disabled={disabled}
-    title={shortcut ? `${label} (${shortcut})` : label}
-  >
-    <span className="toolbar-icon">{icon}</span>
-    <span className="toolbar-label">{label}</span>
-  </button>
-);
 
 export default App;

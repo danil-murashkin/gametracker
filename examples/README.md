@@ -24,9 +24,9 @@ cd editor
 npm run export:logic-counter
 ```
 
-Дальше скопируйте `ui*.c` / `ui*.h` в `common/ui/` и пересоберите симулятор (см. [README.md](../README.md), шаг 2).
+Дальше скопируйте `ui*.c` / `ui*.h` в `common/ui/` и пересоберите прошивку (см. [README.md](../README.md), шаг 2).
 
-> **Почему логика «не работает» в симуляторе сейчас:** `simulator/` и `firmware/` линкуют ручной `common/ui/ui_counter.c`, а не код из редактора. Logic Editor генерирует C, но его нужно **экспортировать** и подключить в сборку.
+Проверка без железа — вкладка **Simulator** в [`../editor/`](../editor/) (тот же сгенерированный C, WASM в браузере).
 
 ---
 
@@ -57,7 +57,7 @@ npm run export:logic-counter
 - **pb_health** = `heal - hits`
 - `health > 0` → `img_alive`, иначе `img_dead`
 
-Вкладки **Design** / **Preview** логику не исполняют — только **Compile** (WASM).
+Вкладки **Design** / **Preview** логику не исполняют — **Simulator** (WASM) и прошивка ESP32.
 
 ### Пересборка примера
 

@@ -14,7 +14,7 @@
 | **Design**  | Экран: виджеты, стили, ресурсы (картинки, шрифты)             |
 | **Logic**   | Визуальная логика: триггеры, условия, действия над UI         |
 | **Code**    | Просмотр и скачивание сгенерированных `.c` / `.h`             |
-| **Preview** | Проверка экрана в браузере: Simple Preview + LVGL Preview + **Compile & Run** (если включено) |
+| **Preview** | Быстрый Canvas 2D-превью + **Simulator** (компиляция сгенерированного C-кода, как на ESP32) |
 
 
 На **Design** у компонентов настраиваются свойства и вкладка **Events** (обработчики на конкретном виджете). На **Logic** — графы из нод: триггеры, ветвления, чтение переменных, show/hide и т.д.
@@ -51,7 +51,7 @@
 3. **Fire** — на таймере: один тик цепочки Execute
 4. **Ctrl+click** на ноде — breakpoint
 
-Debug исполняет те же правила, что Simple Preview и codegen (C block, Write variable, If/Else ветки).
+Debug исполняет те же правила, что Preview и codegen (C block, Write variable, If/Else ветки).
 
 
 - **User variables** — свои `int` / `float` / `string` / `bool` (панель **Variables** справа).

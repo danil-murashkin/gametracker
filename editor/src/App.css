@@ -32,6 +32,7 @@ body {
   padding: 0 16px;
   gap: 16px;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .app-logo {
@@ -57,7 +58,8 @@ body {
 }
 
 .logo-icon {
-  font-size: 20px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .logo-text {
@@ -67,94 +69,120 @@ body {
 }
 
 .project-name-display {
+  font-family: 'Arial Narrow', 'Roboto Condensed', 'Segoe UI', sans-serif;
+  font-stretch: condensed;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Main tabs */
+/* Header controls: tabs + toolbar aligned left */
+.app-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .app-tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-left: 16px;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
-.tab-btn {
+.header-controls-divider {
+  margin: 0 8px;
+}
+
+.tab-btn,
+.toolbar-button {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 8px;
   border: none;
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  color: #999;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-
-.tab-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
   color: #ccc;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
 }
 
-.tab-btn.active {
+.tab-btn {
+  min-width: 60px;
+}
+
+.toolbar-button {
+  min-width: 52px;
+}
+
+.tab-btn:hover,
+.toolbar-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.tab-btn.active,
+.toolbar-button.active {
   background: rgba(33, 150, 243, 0.2);
   color: #6bb3ff;
+}
+
+.toolbar-button.disabled,
+.toolbar-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tab-btn-icon,
+.toolbar-button-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.tab-btn-icon svg,
+.toolbar-button-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.tab-btn-label,
+.toolbar-button-label {
+  font-size: 13px;
+  font-weight: inherit;
+  font-family: inherit;
 }
 
 .app-toolbar {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-left: auto;
-}
-
-.toolbar-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  color: #ccc;
-  font-size: 13px;
-  transition: all 0.15s;
-}
-
-.toolbar-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.toolbar-button.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.toolbar-button.active {
-  background: rgba(74, 144, 217, 0.3);
-  color: #6bb3ff;
-}
-
-.toolbar-icon {
-  font-size: 16px;
-}
-
-.toolbar-label {
-  font-size: 13px;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .toolbar-divider {
   width: 1px;
-  height: 24px;
+  height: 36px;
   background: rgba(255, 255, 255, 0.2);
-  margin: 0 8px;
+  margin: 0 6px;
+  flex-shrink: 0;
 }
 
 /* Body */
@@ -294,45 +322,4 @@ body {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-/* Preview sub-tabs */
-.preview-sub-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--border-color, #333);
-  background: var(--bg-secondary, #252526);
-  flex-shrink: 0;
-}
-
-.preview-sub-tab {
-  padding: 8px 20px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--text-secondary, #888);
-  cursor: pointer;
-  font-size: 13px;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.preview-sub-tab:hover {
-  color: var(--text-primary, #ccc);
-}
-
-.preview-sub-tab.active {
-  color: var(--text-primary, #fff);
-  border-bottom-color: #4fc3f7;
-}
-
-.preview-sub-content {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.preview-sub-content > * {
-  flex: 1;
-  min-height: 0;
 }

@@ -15,24 +15,20 @@
 ## Архитектура
 
 ```
-  Design time (ПК, браузер)              Runtime (один код)
+  Design time (ПК, браузер)              Runtime (ESP32)
  ┌──────────────────────────┐          ┌─────────────────────┐
  │  editor/ — IoTSharp fork  │  .c/.h   │  common/            │
- │  UI + Logic → экспорт C   │ ───────► │  ui/ + app + HAL    │
- └──────────────────────────┘          └──────────┬──────────┘
-                                                  │
-                                    ┌─────────────┴─────────────┐
-                                    ▼                           ▼
-                             simulator/                   firmware/
-                             (SDL, ПК)                    (ESP32)
+ │  Design, Logic, Code,     │ ───────► │  ui/ + app + HAL    │
+ │  Preview, Simulator (WASM)│          └──────────┬──────────┘
+ └──────────────────────────┘                     ▼
+                                              firmware/
 ```
 
 | Компонент | Путь | Роль |
 |-----------|------|------|
-| **Редактор** | [`editor/`](editor/) | Форк [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor): LVGL UI, события, логика, экспорт C |
+| **Редактор** | [`editor/`](editor/) | Форк [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor): LVGL UI, события, логика, экспорт C, **Simulator** (WASM в браузере) |
 | **Примеры** | [`examples/`](examples/) | Готовые `.lvgl.json` для Import (Demo Vault Boy) |
-| **Общий код** | [`common/`](common/) | UI (LVGL), приложение, HAL — одинаково на ПК и ESP32 |
-| **Симулятор** | [`simulator/`](simulator/) | Проверка без железа |
+| **Общий код** | [`common/`](common/) | UI (LVGL), приложение, HAL — для прошивки ESP32 |
 | **Прошивка** | [`firmware/`](firmware/) | ESP32, дисплей ST7789, кнопки, радио (позже) |
 
 Редактор: `cd editor` → `.\lvgl-editor-start.ps1` → http://localhost:8083. Документация — [editor/README.md](editor/README.md).
@@ -65,7 +61,7 @@
 |-----|----------|
 | 1 | В **редакторе** (`editor/`) — вкладки **Design** и **Logic**: экран + поведение |
 | 2 | **Code** — скачать `ui.c`, `ui_events.c`, `ui_logic.c` → `common/ui/` |
-| 3 | **Симулятор** — проверка на ПК |
+| 3 | **Simulator** (вкладка в редакторе) — проверка в браузере (тот же C, WASM) |
 | 4 | **Прошивка** — тот же код на устройстве |
 
 Стартовый проект: [examples/gametracker-demo.lvgl.json](examples/gametracker-demo.lvgl.json) (**Import project**).
@@ -84,7 +80,7 @@
 
 ### Симулятор и прошивка
 
-Один набор файлов из `common/ui/` линкуется в [simulator/](simulator/) и [firmware/](firmware/). Кнопки: GPIO 32/33 и 12/14 (см. [firmware/docs/display_bringup.md](firmware/docs/display_bringup.md)).
+Симуляция — вкладка **Simulator** в [`editor/`](editor/) (Emscripten + LVGL в браузере). На ESP32 тот же экспортированный код из `common/ui/` линкуется в [firmware/](firmware/). Кнопки: GPIO 32/33 и 12/14 (см. [firmware/docs/display_bringup.md](firmware/docs/display_bringup.md)).
 
 ## Железо (текущий стенд)
 
@@ -101,5 +97,4 @@
 | Редактор (IoTSharp) | [editor/README.md](editor/README.md) |
 | Пример Demo | [examples/README.md](examples/README.md) |
 | Общий код | [common/README.md](common/README.md) |
-| Симулятор | [simulator/README.md](simulator/README.md) |
 | Дисплей / bring-up | [firmware/docs/display_bringup.md](firmware/docs/display_bringup.md) |

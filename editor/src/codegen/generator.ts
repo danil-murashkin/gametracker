@@ -142,6 +142,132 @@ export async function generateZipBlob(
   return zip.generateAsync({ type: 'blob' });
 }
 
+export type ExportCodeResult = 'saved' | 'cancelled' | 'unsupported';
+
+async function writeFilesToDirectory(
+  dir: FileSystemDirectoryHandle,
+  files: Record<string, string>,
+): Promise<void> {
+  for (const [fileName, content] of Object.entries(files)) {
+    const handle = await dir.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(content);
+    await writable.close();
+  }
+}
+
+/**
+ * Open a directory picker and write generated C sources into the chosen folder.
+ */
+export async function exportCodeFilesToDirectory(
+  files: Record<string, string>,
+): Promise<ExportCodeResult> {
+  const w = window as Window & {
+    showDirectoryPicker?: (options?: { mode?: 'read' | 'readwrite' }) => Promise<FileSystemDirectoryHandle>;
+  };
+
+  if (typeof w.showDirectoryPicker !== 'function') {
+    return 'unsupported';
+  }
+
+  try {
+    const dir = await w.showDirectoryPicker({ mode: 'readwrite' });
+    await writeFilesToDirectory(dir, files);
+    return 'saved';
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      return 'cancelled';
+    }
+    throw e;
+  }
+}
+
+/** UI + image .c files ready for export to `common/ui_generated/` or firmware tree. */
+export async function collectGeneratedExportFiles(
+  pages: Page[],
+  options: Partial<CodeGenOptions> = {},
+  logicGraphs: LogicGraph[] = [],
+  theme?: Theme,
+  imageResources: ImageResource[] = [],
+  fontResources: FontResource[] = [],
+  defaultFont?: string,
+  defaultFontSize?: number,
+  useBuiltinSymbols?: boolean,
+  symbolFont?: string,
+): Promise<Record<string, string>> {
+  const code = generateCode(
+    pages,
+    options,
+    logicGraphs,
+    theme,
+    imageResources,
+    fontResources,
+    defaultFont,
+    defaultFontSize,
+    useBuiltinSymbols,
+    symbolFont,
+  );
+  const files: Record<string, string> = { ...code };
+
+  if (imageResources.length > 0) {
+    const usedIds = new Set<string>();
+    const walk = (components: import('../types').LvglComponent[]) => {
+      for (const comp of components) {
+        if (comp.type === 'img' && comp.props.src) {
+          const matched = imageResources.find(
+            (img) => img.id === comp.props.src || img.name === comp.props.src,
+          );
+          if (matched) usedIds.add(matched.id);
+        }
+        walk(comp.children);
+      }
+    };
+    for (const page of pages) walk(page.components);
+
+    const usedImages = imageResources.filter((img) => usedIds.has(img.id));
+    for (const img of usedImages) {
+      try {
+        const { imageData } = await loadImageFromBase64(img.data);
+        const convOptions = { ...DEFAULT_IMAGE_OPTIONS, format: img.format };
+        const result = generateImageCCode(img.cArrayName, imageData, convOptions);
+        files[`${img.cArrayName}.c`] = result.cCode;
+      } catch (err) {
+        console.error(`Failed to generate C code for image ${img.name}:`, err);
+      }
+    }
+  }
+
+  return files;
+}
+
+function downloadFilesFallback(files: Record<string, string>): void {
+  for (const [fileName, content] of Object.entries(files)) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * Pick a folder and save files; falls back to browser download if unsupported.
+ */
+export async function exportGeneratedCodeToDirectory(
+  files: Record<string, string>,
+): Promise<ExportCodeResult> {
+  const result = await exportCodeFilesToDirectory(files);
+  if (result === 'unsupported') {
+    downloadFilesFallback(files);
+    return 'unsupported';
+  }
+  return result;
+}
+
 /**
  * Download generated code as ZIP file
  */

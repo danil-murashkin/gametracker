@@ -228,7 +228,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({ viewMode }) => {
                   Regenerate
                 </button>
               </div>
-              <pre className="code-preview">{generatedCode}</pre>
+              <pre className="image-code-snippet">{generatedCode}</pre>
             </div>
             <div className="modal-footer">
               <button onClick={handleCopyCode}>📋 Copy code</button>

@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest --run",
     "build:demo": "node scripts/build-gametracker-demo.mjs",
-    "export:logic-counter": "vitest run src/codegen/__tests__/logic-timer-counter.test.ts"
+    "export:logic-counter": "vitest run src/codegen/__tests__/logic-timer-counter.test.ts",
+    "rebuild:simulator": "vitest run scripts/rebuild-simulator.test.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

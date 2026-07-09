@@ -9,11 +9,63 @@
 
 import type { Plugin } from 'vite';
 import { execFile } from 'node:child_process';
-import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rm, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
+
+const EDITOR_ROOT = join(dirname(fileURLToPath(import.meta.url)));
+const REPO_ROOT = join(EDITOR_ROOT, '..');
+const LVGL_WASI_DIR = join(EDITOR_ROOT, 'public', 'lvgl-wasi');
+const LVGL_HEADERS_JSON = join(LVGL_WASI_DIR, 'lvgl-headers.json');
+const BUNDLED_LVGL_LIB = join(LVGL_WASI_DIR, 'liblvgl.a');
+const BUNDLED_LV_CONF = join(LVGL_WASI_DIR, 'lv_conf.h');
+const HAL_BUTTONS_H = join(REPO_ROOT, 'common', 'hal', 'hal_buttons.h');
+const HAL_BUTTONS_WASM_C = join(EDITOR_ROOT, 'wasm', 'hal_buttons_wasm.c');
+const LVGL_HEADERS_CACHE = join(EDITOR_ROOT, '.cache', 'lvgl-headers');
+
+/** Resolve emcc executable — works even when PATH was not activated via emsdk_env.ps1 */
+function resolveEmccPath(): string | null {
+  const emccNames =
+    process.platform === 'win32'
+      ? ['emcc.exe', 'emcc.cmd', 'emcc.bat']
+      : ['emcc'];
+
+  const emsdkRoots = [
+    process.env.EMSDK,
+    join(REPO_ROOT, '.tools', 'emsdk'),
+    'C:\\emsdk',
+  ].filter((p): p is string => !!p);
+
+  for (const root of emsdkRoots) {
+    for (const name of emccNames) {
+      const candidate = join(root, 'upstream', 'emscripten', name);
+      if (existsSync(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return null;
+}
+
+function activateEmsdkInProcess(): string | null {
+  const emccPath = resolveEmccPath();
+  if (!emccPath) return null;
+
+  const emscriptenDir = dirname(emccPath);
+  const emsdkRoot = dirname(dirname(emscriptenDir));
+  process.env.EMSDK = emsdkRoot;
+  const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+  const currentPath = process.env[pathKey] ?? '';
+  if (!currentPath.toLowerCase().includes(emscriptenDir.toLowerCase())) {
+    process.env[pathKey] = `${emscriptenDir};${currentPath}`;
+  }
+
+  return emccPath;
+}
 
 // Font data sent from the client for server-side conversion
 interface FontRequest {
@@ -32,20 +84,13 @@ interface LvglConfigRequest {
   memSize: number; // KB
 }
 
-// Paths
-const EMSDK_ENV = '/home/xcssa/.openclaw/workspace/tools/emsdk/emsdk_env.sh';
-const LVGL_PARENT_DIR = '/home/xcssa/.openclaw/workspace/tools';
-const PROJECT_DIR = '/home/xcssa/.openclaw/workspace/projects/lvgl-editor';
-const LV_CONF_DIR = join(PROJECT_DIR, 'wasm');
-const LIBLVGL_PATH = join(PROJECT_DIR, 'wasm/build/liblvgl_emcc.a');
-const LV_CONF_TEMPLATE_PATH = join(PROJECT_DIR, 'wasm/lv_conf.h');
+// Optional overrides for CI / upstream dev machines
+const EMSDK_ENV = process.env.LVGL_EMSDK_ENV ?? '';
+const LEGACY_LVGL_LIB = process.env.LVGL_LIB_PATH ?? '';
+const LEGACY_LV_CONF_DIR = process.env.LVGL_CONF_DIR ?? '';
 
 // Build cache: buildId → directory path
 const builds = new Map<string, string>();
-
-// LVGL lib cache: configHash → { libPath, confDir, building }
-const lvglLibCache = new Map<string, { libPath: string; confDir: string; ready: boolean; error?: string }>();
-const lvglLibBuilding = new Map<string, Promise<{ libPath: string; confDir: string }>>();
 
 // Cleanup old builds after 10 minutes
 const BUILD_TTL_MS = 10 * 60 * 1000;
@@ -58,82 +103,151 @@ function hashLvglConfig(config: LvglConfigRequest): string {
   return createHash('md5').update(str).digest('hex').slice(0, 12);
 }
 
-/**
- * Generate a custom lv_conf.h based on the template and project config
- */
-async function generateCustomLvConf(config: LvglConfigRequest): Promise<string> {
-  let template = await readFile(LV_CONF_TEMPLATE_PATH, 'utf-8');
+let lvglHeadersReady: Promise<string> | null = null;
 
-  // Color depth
-  const colorDepth = config.colorFormat === 'RGB565' ? 16 : config.colorFormat === 'RGB888' ? 24 : 32;
-  template = template.replace(
-    /#define LV_COLOR_DEPTH\s+\d+/,
-    `#define LV_COLOR_DEPTH ${colorDepth}`,
-  );
+/** Extract bundled LVGL headers from lvgl-headers.json (cached on disk). */
+async function ensureLvglHeaders(): Promise<string> {
+  if (lvglHeadersReady) {
+    return lvglHeadersReady;
+  }
 
-  // Font large
-  template = template.replace(
-    /#define LV_FONT_FMT_TXT_LARGE\s+\d+/,
-    `#define LV_FONT_FMT_TXT_LARGE ${config.fontLarge ? 1 : 0}`,
-  );
+  lvglHeadersReady = (async () => {
+    const marker = join(LVGL_HEADERS_CACHE, 'include', 'lvgl', 'lvgl.h');
+    if (!existsSync(marker)) {
+      if (!existsSync(LVGL_HEADERS_JSON)) {
+        throw new Error(`LVGL headers bundle not found: ${LVGL_HEADERS_JSON}`);
+      }
 
-  // Default font
-  template = template.replace(
-    /#define LV_FONT_DEFAULT\s+.+/,
-    `#define LV_FONT_DEFAULT &lv_font_${config.defaultFont}`,
-  );
+      const bundle = JSON.parse(await readFile(LVGL_HEADERS_JSON, 'utf-8')) as Record<string, string>;
+      await mkdir(LVGL_HEADERS_CACHE, { recursive: true });
 
-  return template;
+      for (const [relPath, content] of Object.entries(bundle)) {
+        const outPath = join(LVGL_HEADERS_CACHE, relPath);
+        await mkdir(dirname(outPath), { recursive: true });
+        await writeFile(outPath, content, 'utf-8');
+      }
+    }
+
+    return LVGL_HEADERS_CACHE;
+  })();
+
+  return lvglHeadersReady;
 }
 
-/**
- * Build a project-specific LVGL static library
- */
-async function buildLvglLib(config: LvglConfigRequest): Promise<{ libPath: string; confDir: string }> {
-  const configHash = hashLvglConfig(config);
-  const cacheDir = join(tmpdir(), `lvgl-lib-${configHash}`);
-  const libPath = join(cacheDir, 'liblvgl_emcc.a');
-
-  // Check if already cached
-  if (existsSync(libPath)) {
-    return { libPath, confDir: cacheDir };
+function resolveBundledLvgl(): { libPath: string; confIncludeDir: string; headersRoot: string } {
+  if (!existsSync(BUNDLED_LVGL_LIB)) {
+    throw new Error(`Bundled LVGL library not found: ${BUNDLED_LVGL_LIB}`);
+  }
+  if (!existsSync(BUNDLED_LV_CONF)) {
+    throw new Error(`Bundled lv_conf.h not found: ${BUNDLED_LV_CONF}`);
   }
 
-  await mkdir(cacheDir, { recursive: true });
+  return {
+    libPath: BUNDLED_LVGL_LIB,
+    confIncludeDir: LVGL_WASI_DIR,
+    headersRoot: LVGL_HEADERS_CACHE,
+  };
+}
 
-  // Generate custom lv_conf.h
-  const customConf = await generateCustomLvConf(config);
-  await writeFile(join(cacheDir, 'lv_conf.h'), customConf, 'utf-8');
+function runShell(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string; code: number }> {
+  return new Promise((resolve) => {
+    const shell = process.platform === 'win32' ? 'cmd.exe' : 'bash';
+    const shellArgs = process.platform === 'win32' ? ['/d', '/s', '/c', cmd] : ['-c', cmd];
+    execFile(shell, shellArgs, { cwd, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+      resolve({
+        stdout: stdout ?? '',
+        stderr: stderr ?? '',
+        code: err ? (err as NodeJS.ErrnoException & { status?: number }).status ?? 1 : 0,
+      });
+    });
+  });
+}
 
-  const LVGL_DIR = join(LVGL_PARENT_DIR, 'lvgl');
+function runEmcc(args: string[], cwd: string): Promise<{ stdout: string; stderr: string; code: number }> {
+  return new Promise((resolve) => {
+    const emcc = activateEmsdkInProcess() ?? (process.platform === 'win32' ? 'emcc.exe' : 'emcc');
+    const useShell =
+      process.platform === 'win32' &&
+      (emcc.toLowerCase().endsWith('.cmd') || emcc.toLowerCase().endsWith('.bat'));
+    execFile(emcc, args, { cwd, maxBuffer: 10 * 1024 * 1024, shell: useShell }, (err, stdout, stderr) => {
+      resolve({
+        stdout: stdout ?? '',
+        stderr: stderr ?? '',
+        code: err ? (err as NodeJS.ErrnoException & { status?: number }).status ?? 1 : 0,
+      });
+    });
+  });
+}
 
-  // Build command (similar to build_lvgl_lib.sh but using custom conf dir)
-  const buildCmd = `source ${EMSDK_ENV} 2>/dev/null && \
-    find "${LVGL_DIR}/src" -name "*.c" > /tmp/lvgl_sources_${configHash}.txt && \
-    mkdir -p "${cacheDir}/objs" && \
-    while IFS= read -r src; do
-      obj="${cacheDir}/objs/$(echo "$src" | sed 's|/|_|g').o"
-      if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ]; then
-        emcc -O2 -c "$src" -o "$obj" \
-          -I"${cacheDir}" \
-          -I"${LVGL_PARENT_DIR}" \
-          -DLV_CONF_INCLUDE_SIMPLE \
-          -Wno-unused-function \
-          -Wno-implicit-function-declaration
-      fi
-    done < /tmp/lvgl_sources_${configHash}.txt && \
-    emar rcs "${libPath}" "${cacheDir}"/objs/*.o`;
+async function compileWithEmcc(
+  sourceFiles: string[],
+  includeDirs: string[],
+  libPath: string,
+  buildDir: string,
+): Promise<{ stdout: string; stderr: string; code: number }> {
+  const exportedFunctions = [
+    '_main',
+    '_app_tick',
+    '_app_mouse_event',
+    '_app_key_event',
+    '_app_button_event',
+    '_wasi_get_framebuffer',
+    '_wasi_get_fb_ready',
+    '_wasi_clear_fb_ready',
+    '_wasi_get_width',
+    '_wasi_get_height',
+  ];
 
-  const result = await runShell(buildCmd, cacheDir);
-  if (result.code !== 0) {
-    throw new Error(`LVGL library build failed: ${result.stderr || result.stdout}`);
+  const args = [
+    ...sourceFiles,
+    '-O2',
+    '-DLV_CONF_INCLUDE_SIMPLE',
+    ...includeDirs.flatMap((dir) => ['-I', dir]),
+    libPath,
+    '-sALLOW_MEMORY_GROWTH=1',
+    '-sINITIAL_MEMORY=33554432',
+    `-sEXPORTED_FUNCTIONS=${JSON.stringify(exportedFunctions)}`,
+    `-sEXPORTED_RUNTIME_METHODS=${JSON.stringify(['ccall', 'cwrap', 'HEAPU8', 'HEAPU32'])}`,
+    '-sNO_EXIT_RUNTIME=1',
+    '-sMODULARIZE=1',
+    '-sEXPORT_NAME=LvglModule',
+    '-sENVIRONMENT=web',
+    '-Wno-unused-function',
+    '-Wno-implicit-function-declaration',
+    '-o',
+    'output.js',
+  ];
+
+  if (EMSDK_ENV && existsSync(EMSDK_ENV) && process.platform !== 'win32') {
+    const cmd = `source ${EMSDK_ENV} 2>/dev/null && emcc ${args.map((a) => (a.includes(' ') ? `"${a}"` : a)).join(' ')}`;
+    return runShell(cmd, buildDir);
   }
 
-  return { libPath, confDir: cacheDir };
+  const direct = await runEmcc(args, buildDir);
+  if (direct.code === 0) {
+    return direct;
+  }
+
+  if (EMSDK_ENV && existsSync(EMSDK_ENV)) {
+    const cmd = `source ${EMSDK_ENV} 2>/dev/null && emcc ${args.map((a) => (a.includes(' ') ? `"${a}"` : a)).join(' ')}`;
+    return runShell(cmd, buildDir);
+  }
+
+  const hint =
+    process.platform === 'win32'
+      ? 'Install Emscripten: .\\scripts\\setup-emsdk.ps1 (or restart editor via .\\lvgl-editor-start.ps1).'
+      : 'Install Emscripten SDK or set LVGL_EMSDK_ENV to emsdk_env.sh.';
+
+  return {
+    code: direct.code,
+    stdout: direct.stdout,
+    stderr: `${direct.stderr || direct.stdout}\n\nemcc not available. ${hint}`,
+  };
 }
 
 function generateMainWrapper(width: number, height: number): string {
-  return `#include "lvgl/lvgl.h"
+  return `#include "lvgl.h"
+#include "hal_buttons.h"
 #include <string.h>
 #include <emscripten.h>
 
@@ -199,6 +313,7 @@ static void keyboard_read_cb(lv_indev_t *indev, lv_indev_data_t *data) {
 }
 
 EMSCRIPTEN_KEEPALIVE void app_tick(uint32_t ms) {
+    hal_buttons_poll();
     lv_tick_inc(ms);
     lv_timer_handler();
 }
@@ -247,6 +362,7 @@ int main(void) {
     lv_group_set_default(g);
     lv_indev_set_group(kb_indev, g);
 
+    hal_buttons_init();
     ui_init();
 
     for (int i = 0; i < 10; i++) {
@@ -257,18 +373,6 @@ int main(void) {
     return 0;
 }
 `;
-}
-
-function runShell(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string; code: number }> {
-  return new Promise((resolve) => {
-    execFile('bash', ['-c', cmd], { cwd, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
-      resolve({
-        stdout: stdout ?? '',
-        stderr: stderr ?? '',
-        code: err ? (err as NodeJS.ErrnoException & { status?: number }).status ?? 1 : 0,
-      });
-    });
-  });
 }
 
 /**
@@ -328,38 +432,28 @@ async function convertFonts(
  * Resolve the LVGL library path and conf include dir for a given config.
  * Uses cache or falls back to default.
  */
-async function resolveLvglLib(lvglConfig?: LvglConfigRequest): Promise<{ libPath: string; confIncludeDir: string }> {
-  if (!lvglConfig) {
-    // Use default library
-    return { libPath: LIBLVGL_PATH, confIncludeDir: LV_CONF_DIR };
+async function resolveLvglLib(_lvglConfig?: LvglConfigRequest): Promise<{
+  libPath: string;
+  confIncludeDir: string;
+  headersRoot: string;
+}> {
+  if (LEGACY_LVGL_LIB && existsSync(LEGACY_LVGL_LIB) && LEGACY_LV_CONF_DIR && existsSync(LEGACY_LV_CONF_DIR)) {
+    const headersRoot = await ensureLvglHeaders();
+    return {
+      libPath: LEGACY_LVGL_LIB,
+      confIncludeDir: LEGACY_LV_CONF_DIR,
+      headersRoot,
+    };
   }
 
-  const configHash = hashLvglConfig(lvglConfig);
-  const cached = lvglLibCache.get(configHash);
-  if (cached?.ready && existsSync(cached.libPath)) {
-    return { libPath: cached.libPath, confIncludeDir: cached.confDir };
-  }
-
-  // Check if already building
-  let buildPromise = lvglLibBuilding.get(configHash);
-  if (!buildPromise) {
-    buildPromise = buildLvglLib(lvglConfig).then(result => {
-      lvglLibCache.set(configHash, { libPath: result.libPath, confDir: result.confDir, ready: true });
-      lvglLibBuilding.delete(configHash);
-      return result;
-    }).catch(err => {
-      lvglLibCache.set(configHash, { libPath: '', confDir: '', ready: false, error: String(err) });
-      lvglLibBuilding.delete(configHash);
-      throw err;
-    });
-    lvglLibBuilding.set(configHash, buildPromise);
-  }
-
-  const result = await buildPromise;
-  return { libPath: result.libPath, confIncludeDir: result.confDir };
+  const bundled = resolveBundledLvgl();
+  bundled.headersRoot = await ensureLvglHeaders();
+  return bundled;
 }
 
 export default function compilePlugin(): Plugin {
+  activateEmsdkInProcess();
+
   return {
     name: 'lvgl-compile',
     configureServer(server) {
@@ -430,16 +524,18 @@ export default function compilePlugin(): Plugin {
           // Resolve LVGL library (project-specific or default)
           let libPath: string;
           let confIncludeDir: string;
+          let headersRoot: string;
           try {
             const resolved = await resolveLvglLib(lvglConfig);
             libPath = resolved.libPath;
             confIncludeDir = resolved.confIncludeDir;
+            headersRoot = resolved.headersRoot;
           } catch (libErr) {
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({
               success: false,
-              error: `LVGL 库编译失败: ${String(libErr)}`,
+              error: `LVGL setup failed: ${String(libErr)}`,
               buildId: '',
             }));
             return;
@@ -451,7 +547,7 @@ export default function compilePlugin(): Plugin {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({
               success: false,
-              error: 'liblvgl_emcc.a not found. Run wasm/build_lvgl_lib.sh first.',
+              error: `LVGL library not found: ${libPath}`,
               buildId: '',
             }));
             return;
@@ -461,6 +557,10 @@ export default function compilePlugin(): Plugin {
           for (const [name, content] of Object.entries(files)) {
             await writeFile(join(buildDir, name), content, 'utf-8');
           }
+
+          // ESP32 HAL shim (GPIO buttons value_1 / value_2)
+          await copyFile(HAL_BUTTONS_H, join(buildDir, 'hal_buttons.h'));
+          await copyFile(HAL_BUTTONS_WASM_C, join(buildDir, 'hal_buttons_wasm.c'));
 
           // Write main_wrapper.c
           await writeFile(join(buildDir, 'main_wrapper.c'), generateMainWrapper(width, height), 'utf-8');
@@ -479,39 +579,24 @@ export default function compilePlugin(): Plugin {
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({
                 success: false,
-                error: `字体转换失败: ${String(fontErr)}`,
+                error: `Font conversion failed: ${String(fontErr)}`,
                 buildId: '',
               }));
               return;
             }
           }
 
-          // Collect .c files from user
-          const cFiles = Object.keys(files).filter(f => f.endsWith('.c'));
+          const cFiles = Object.keys(files).filter((f) => f.endsWith('.c'));
           const fontFiles = Object.keys(fontCFiles);
-          const sourceFiles = ['main_wrapper.c', ...cFiles, ...fontFiles].join(' ');
+          const sourceFiles = ['main_wrapper.c', 'hal_buttons_wasm.c', ...cFiles, ...fontFiles];
+          const includeDirs = [
+            join(headersRoot, 'include', 'lvgl'),
+            join(headersRoot, 'include'),
+            confIncludeDir,
+            buildDir,
+          ];
 
-          const emccCmd = `source ${EMSDK_ENV} 2>/dev/null && emcc ${sourceFiles} \
-            -O2 -DLV_CONF_INCLUDE_SIMPLE \
-            -I${LVGL_PARENT_DIR} \
-            -I${LVGL_PARENT_DIR}/lvgl \
-            -I${LVGL_PARENT_DIR}/lvgl/src \
-            -I${confIncludeDir} \
-            -I. \
-            ${libPath} \
-            -sALLOW_MEMORY_GROWTH=1 \
-            -sINITIAL_MEMORY=33554432 \
-            -sEXPORTED_FUNCTIONS="['_main','_app_tick','_app_mouse_event','_app_key_event','_wasi_get_framebuffer','_wasi_get_fb_ready','_wasi_clear_fb_ready','_wasi_get_width','_wasi_get_height']" \
-            -sEXPORTED_RUNTIME_METHODS="['ccall','cwrap','HEAPU8','HEAPU32']" \
-            -sNO_EXIT_RUNTIME=1 \
-            -sMODULARIZE=1 \
-            -sEXPORT_NAME='LvglModule' \
-            -sENVIRONMENT=web \
-            -Wno-unused-function \
-            -Wno-implicit-function-declaration \
-            -o output.js`;
-
-          const result = await runShell(emccCmd, buildDir);
+          const result = await compileWithEmcc(sourceFiles, includeDirs, libPath, buildDir);
 
           if (result.code !== 0) {
             // Cleanup on failure

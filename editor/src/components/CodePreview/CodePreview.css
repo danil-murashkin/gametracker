@@ -1,4 +1,4 @@
-.code-preview {
+.generated-code-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -9,7 +9,7 @@
   overflow: hidden;
 }
 
-.code-preview-header {
+.generated-code-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -21,13 +21,13 @@
   flex-shrink: 0;
 }
 
-.code-preview-tabs {
+.generated-code-panel-tabs {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
 }
 
-.code-tab {
+.generated-code-tab {
   padding: 6px 12px;
   border: none;
   background: transparent;
@@ -39,23 +39,23 @@
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
 }
 
-.code-tab:hover {
+.generated-code-tab:hover {
   background: #e8e8e8;
   color: #333;
 }
 
-.code-tab.active {
+.generated-code-tab.active {
   background: #2196f3;
   color: #fff;
 }
 
-.code-preview-actions {
+.generated-code-panel-actions {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.code-version-select {
+.generated-code-version-select {
   padding: 5px 8px;
   border: 1px solid #ddd;
   background: #fff;
@@ -66,15 +66,15 @@
   outline: none;
 }
 
-.code-version-select:hover {
+.generated-code-version-select:hover {
   border-color: #ccc;
 }
 
-.code-version-select:focus {
+.generated-code-version-select:focus {
   border-color: #2196f3;
 }
 
-.code-action-btn {
+.generated-code-action-btn {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -88,35 +88,35 @@
   transition: all 0.15s;
 }
 
-.code-action-btn:hover {
+.generated-code-action-btn:hover {
   background: #f5f5f5;
   border-color: #ccc;
 }
 
-.code-action-btn.primary {
+.generated-code-action-btn.primary {
   background: #2196f3;
   border-color: #2196f3;
   color: #fff;
 }
 
-.code-action-btn.primary:hover {
+.generated-code-action-btn.primary:hover {
   background: #1976d2;
   border-color: #1976d2;
 }
 
-.code-preview-editor {
+.generated-code-panel-editor {
   flex: 1 1 0;
   position: relative;
   overflow: hidden;
   min-height: 0;
 }
 
-.code-preview-editor-inner {
+.generated-code-panel-editor-inner {
   position: absolute;
   inset: 0;
 }
 
-.code-preview-loading {
+.generated-code-panel-loading {
   position: absolute;
   top: 0;
   left: 0;
@@ -130,14 +130,14 @@
   font-size: 14px;
 }
 
-.code-preview-footer {
+.generated-code-panel-footer {
   padding: 8px 12px;
   background: #f5f5f5;
   border-top: 1px solid #e0e0e0;
   flex-shrink: 0;
 }
 
-.code-stats {
+.generated-code-stats {
   font-size: 11px;
   color: #888;
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;

@@ -1,7 +1,9 @@
-# Common — код для всех платформ
+# Common — код для прошивки ESP32
 
-Платформо-независимый код, который линкуется в **firmware** (ESP32) и **simulator** (ПК).  
+Платформо-независимый код, который линкуется в **firmware** (ESP32).  
 Список исходников — в [`common_sources.cmake`](common_sources.cmake).
+
+Симуляция UI и логики — во вкладке **Simulator** в [`../editor/`](../editor/) (WASM в браузере, тот же сгенерированный C).
 
 ## Сейчас (счётчик)
 
@@ -10,12 +12,11 @@
 | `app/app_counter.c` | Логика приложения (счётчик, обработка jumper) |
 | `ui/ui_counter.c` | LVGL-интерфейс (фон, квадрат, цифра) |
 | `ui/ui_port.h` | Контракт порта LVGL (lock / async) |
-| `hal/hal_jumper.h` | API ввода +/- (реализация — в `firmware/` или `simulator/platform/`) |
+| `hal/hal_jumper.h` | API ввода +/- (реализация — в `firmware/`) |
 
 ```
-firmware/main/app_main.c     ─┐
-simulator/main.c             ─┼─► app_counter_init()
-                               │   hal_jumper_init(app_counter_on_jumper)
+firmware/main/app_main.c  ──► app_counter_init()
+                               hal_jumper_init(app_counter_on_jumper)
                                ▼
                     common/app/app_counter.c
                                │
@@ -33,11 +34,10 @@ simulator/main.c             ─┼─► app_counter_init()
 | `app/app_runtime.c` | Связка rules + UI |
 | `ui/ui_demo.c` | Экран под FSM |
 
-Чтобы включить FSM на обеих платформах — заменить `app_counter` на `app_runtime` в `common_sources.cmake`.
+Чтобы включить FSM на ESP32 — заменить `app_counter` на `app_runtime` в `common_sources.cmake`.
 
 ## Порты UI
 
 | Платформа | Файл |
 |-----------|------|
 | ESP32 | `firmware/main/platform/ui_port_esp.c` |
-| Симулятор | `simulator/platform/platform_sdl.c` |

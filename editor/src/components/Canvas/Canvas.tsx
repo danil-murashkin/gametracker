@@ -931,6 +931,9 @@ const Canvas: React.FC = () => {
     ));
   };
 
+  const viewportHalfW = (canvas.width * canvas.zoom) / 2;
+  const viewportHalfH = (canvas.height * canvas.zoom) / 2;
+
   return (
     <div
       ref={containerRef}
@@ -945,7 +948,7 @@ const Canvas: React.FC = () => {
       <div
         className="canvas-viewport"
         style={{
-          transform: `translate(${canvas.panX}px, ${canvas.panY}px)`,
+          transform: `translate(calc(-${viewportHalfW}px + ${canvas.panX}px), calc(-${viewportHalfH}px + ${canvas.panY}px))`,
         }}
       >
         <div

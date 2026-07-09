@@ -422,7 +422,7 @@ const EventEditDialog: React.FC<EventEditDialogProps> = ({
               </button>
             </div>
             {showCodePreview && (
-              <pre className="code-preview">
+              <pre className="event-code-snippet">
                 {generateCodePreview()}
               </pre>
             )}

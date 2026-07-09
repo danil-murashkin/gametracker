@@ -5,7 +5,7 @@ import Editor from '@monaco-editor/react';
 import { useEditorStore } from '../../store/editorStore';
 import { useLogicEditorStore } from '../LogicEditor';
 import { useResourceStore } from '../../resources/resourceStore';
-import { generateCode, getGeneratedFileNames, downloadAsZip } from '../../codegen';
+import { generateCode, getGeneratedFileNames, collectGeneratedExportFiles, exportGeneratedCodeToDirectory } from '../../codegen';
 import type { CodeGenOptions, GeneratedCode } from '../../codegen/types';
 import { DEFAULT_CODEGEN_OPTIONS } from '../../codegen/types';
 import { toast } from '../Toast';
@@ -54,14 +54,27 @@ const CodePanel: React.FC = () => {
   const handleExport = useCallback(async () => {
     setIsExporting(true);
     try {
-      await downloadAsZip(pages, options, logicGraphs, 'lvgl_ui.zip', undefined, imageResources);
+      const files = await collectGeneratedExportFiles(
+        pages,
+        options,
+        logicGraphs,
+        undefined,
+        imageResources,
+        fontResources,
+      );
+      const result = await exportGeneratedCodeToDirectory(files);
+      if (result === 'saved') {
+        toast.success(`Exported ${Object.keys(files).length} files`);
+      } else if (result === 'unsupported') {
+        toast.success('Files downloaded (folder picker not supported in this browser)');
+      }
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Export failed, please retry');
     } finally {
       setIsExporting(false);
     }
-  }, [pages, options, logicGraphs, imageResources]);
+  }, [pages, options, logicGraphs, imageResources, fontResources]);
   
   // Handle copy
   const handleCopy = useCallback(() => {
@@ -110,9 +123,9 @@ const CodePanel: React.FC = () => {
             className="toolbar-btn export-btn"
             onClick={handleExport}
             disabled={isExporting}
-            title="Export as ZIP"
+            title="Export to folder"
           >
-            {isExporting ? 'Exporting...' : '📦 Export ZIP'}
+            {isExporting ? 'Exporting...' : '📁 Export'}
           </button>
         </div>
       </div>
