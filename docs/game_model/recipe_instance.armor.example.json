@@ -1,10 +1,18 @@
 {
   "$schema": "./recipe_instance.schema.json",
   "scenario_name": "fallout",
+<<<<<<< HEAD
+  "name": "armor_leather",
+  "equipped": true,
+  "uses_applied": 0,
+  "uses_left": 0,
+  "signature": "80ca836666b1ba4fea36df63ee3203a52d0ab5b1498b3d606037cea3ad5c806a"
+=======
   "instance_id": "deadbeef01",
   "name": "armor_leather",
   "equipped": true,
   "uses_applied": 0,
   "uses_left": 0,
   "signature": "d97a18eb132b8a7941a9ad0804c7a0e1cdb2cb10a5f443f261dde2f6bad043b4"
+>>>>>>> baffca7 (add game engine)
 }

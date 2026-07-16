@@ -1,6 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gametracker.local/schemas/recipe_instance.schema.json",
+<<<<<<< HEAD
+  "title": "Gametracker Recipe Instance (NFC item tag, max 512 bytes)",
+  "type": "object",
+  "required": [
+    "scenario_name",
+    "instance_id",
+    "name",
+=======
   "title": "Gametracker Recipe Instance (NFC item tag)",
   "type": "object",
   "required": [
@@ -8,25 +16,56 @@
     "instance_id",
     "name",
     "equipped",
+>>>>>>> baffca7 (add game engine)
     "uses_applied",
     "uses_left",
     "signature"
   ],
   "additionalProperties": false,
+<<<<<<< HEAD
+  "description": "Payload written to NFC user memory. Must fit in 512 bytes. Compact JSON only (no whitespace, no $schema). UID is read from the chip, not stored in JSON.",
+=======
+>>>>>>> baffca7 (add game engine)
   "properties": {
     "scenario_name": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*$",
+<<<<<<< HEAD
+      "maxLength": 16,
+      "description": "Game scenario id. PDA rejects if != character.scenario_name"
+=======
       "description": "Game scenario this item belongs to. PDA rejects tag if != character.scenario_name"
     },
     "instance_id": {
       "type": "string",
       "pattern": "^[a-f0-9]+$",
       "description": "NFC tag UID, hex without separators"
+>>>>>>> baffca7 (add game engine)
     },
     "name": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*$",
+<<<<<<< HEAD
+      "maxLength": 32,
+      "description": "Recipe name from scenario"
+    },
+    "equipped": {
+      "type": "boolean",
+      "description": "true — worn on a character (signed with K_char); false — free item (signed with K_tag). Equip/unequip changes signing key"
+    },
+    "uses_applied": {
+      "type": "number",
+      "minimum": 0
+    },
+    "uses_left": {
+      "type": "number",
+      "minimum": 0
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "HMAC-SHA256 hex (64 chars). UID for signing is taken from the NFC chip"
+=======
       "description": "Recipe name from scenario"
     },
     "equipped": {
@@ -44,6 +83,7 @@
     "signature": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
+>>>>>>> baffca7 (add game engine)
     }
   }
 }

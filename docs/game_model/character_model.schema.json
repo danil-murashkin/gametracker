@@ -172,14 +172,22 @@
     },
     "effect": {
       "type": "object",
+<<<<<<< HEAD
+      "required": ["target", "operation", "expr"],
+=======
       "required": ["target", "op", "expr"],
+>>>>>>> baffca7 (add game engine)
       "additionalProperties": false,
       "properties": {
         "target": {
           "type": "string",
           "description": "stat name"
         },
+<<<<<<< HEAD
+        "operation": {
+=======
         "op": {
+>>>>>>> baffca7 (add game engine)
           "type": "string",
           "enum": [
             "set",
