@@ -1,0 +1,638 @@
+{
+  "$schema": "./character_model.schema.json",
+  "scenario_name": "fallout",
+  "meta": {
+    "title": "Fallout"
+  },
+  "stats": [
+    {
+      "name": "health",
+      "description": "",
+      "title": "Health",
+      "kind": "passive",
+      "min": 0,
+      "max": 100,
+      "default": 100,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "max_health",
+      "description": "",
+      "title": "Max health",
+      "kind": "passive",
+      "min": 1,
+      "max": 9999,
+      "default": 100,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "strength",
+      "description": "",
+      "title": "Strength",
+      "kind": "passive",
+      "min": 1,
+      "max": 10,
+      "default": 5,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "endurance",
+      "description": "",
+      "title": "Endurance",
+      "kind": "passive",
+      "min": 1,
+      "max": 10,
+      "default": 5,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "food",
+      "description": "Base drain -3/sec",
+      "title": "Food",
+      "kind": "passive",
+      "min": 0,
+      "max": 100000,
+      "default": 43200,
+      "buff_rate": -3,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "radiation",
+      "description": "",
+      "title": "Radiation",
+      "kind": "passive",
+      "min": 0,
+      "max": 1000,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "armor_phys_resist",
+      "description": "",
+      "title": "Armor physical resist",
+      "kind": "passive",
+      "min": 0,
+      "max": 20,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "is_dead",
+      "description": "Key state 0/1",
+      "title": "Dead",
+      "kind": "passive",
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "has_radiation_sickness",
+      "description": "",
+      "title": "Radiation sickness",
+      "kind": "passive",
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "perk_doctor",
+      "description": "",
+      "title": "Perk: doctor",
+      "kind": "passive",
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "water",
+      "description": "",
+      "title": "Water",
+      "kind": "passive",
+      "min": 0,
+      "max": 100000,
+      "default": 72000,
+      "buff_rate": -5,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "luck",
+      "description": "",
+      "title": "Luck",
+      "kind": "passive",
+      "min": 1,
+      "max": 10,
+      "default": 5,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "perk_survivor",
+      "description": "",
+      "title": "Perk: survivor",
+      "kind": "passive",
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "perk_party_king",
+      "description": "",
+      "title": "Perk: party king",
+      "kind": "passive",
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "nuka_addicted",
+      "description": "Hangover slot k",
+      "title": "Nuka addiction",
+      "kind": "passive",
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "nuka_crash_pending",
+      "description": "Marker d after refresh",
+      "title": "Nuka crash pending",
+      "kind": "passive",
+      "min": 0,
+      "max": 1,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "nuka_crash_timer",
+      "description": "Countdown before hangover; kind timed when armed",
+      "title": "Nuka crash timer",
+      "kind": "none",
+      "min": 0,
+      "max": 10000,
+      "default": 0,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    }
+  ],
+  "recipes": [
+    {
+      "name": "mech_core",
+      "description": "Derived stats and key state watchers",
+      "title": "Core character mechanics",
+      "kind": "passive",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 0,
+      "while": "",
+      "effects": [
+        {
+          "target": "max_health",
+          "op": "set",
+          "expr": "100 + strength * endurance * 10"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [
+        {
+          "when": "health <= 0 && is_dead == 0",
+          "edge": "on_rise",
+          "effects": [
+            {
+              "target": "is_dead",
+              "op": "set",
+              "expr": "1"
+            }
+          ],
+          "start": [
+            "on_death_lock"
+          ],
+          "stop": []
+        },
+        {
+          "when": "radiation >= 200 && has_radiation_sickness == 0",
+          "edge": "on_rise",
+          "effects": [
+            {
+              "target": "has_radiation_sickness",
+              "op": "set",
+              "expr": "1"
+            }
+          ],
+          "start": [
+            "disease_radiation_sickness"
+          ],
+          "stop": []
+        },
+        {
+          "when": "has_radiation_sickness == 0",
+          "edge": "on_fall",
+          "effects": [],
+          "start": [],
+          "stop": [
+            "disease_radiation_sickness"
+          ]
+        }
+      ],
+      "signature": "0d4d6fa04928f744e2ff87969ce12bc820cd07c88d89f9af186b0aaa70b6de85"
+    },
+    {
+      "name": "mech_starvation_damage",
+      "description": "",
+      "title": "Starvation damage",
+      "kind": "passive",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 0,
+      "while": "food <= 0 && is_dead == 0",
+      "effects": [
+        {
+          "target": "health",
+          "op": "set_buff_rate",
+          "expr": "-1"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "44f2460d277bfdde4cff2ca0eda54aacdcc4971566227e51d5f890492486dc52"
+    },
+    {
+      "name": "armor_leather",
+      "description": "Started on equip",
+      "title": "Leather armor",
+      "kind": "passive",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 0,
+      "while": "",
+      "effects": [
+        {
+          "target": "armor_phys_resist",
+          "op": "set",
+          "expr": "5"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "2f8c8071a9bed482e0603e87942a6b49f3b1f8badfa802425a45b162479e4a3a"
+    },
+    {
+      "name": "item_stimpak",
+      "description": "",
+      "title": "Stimpak",
+      "kind": "instant",
+      "uses": 1,
+      "uses_max": 1,
+      "duration_sec": 0,
+      "while": "",
+      "effects": [
+        {
+          "target": "health",
+          "op": "add",
+          "expr": "35"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "5bd000d3b4700e6075e7c53a4d0941a5179d99443e92710145871d86f166c083"
+    },
+    {
+      "name": "item_speech_strength",
+      "description": "",
+      "title": "Speech: strength +2",
+      "kind": "timed",
+      "uses": 5,
+      "uses_max": 5,
+      "duration_sec": 600,
+      "while": "",
+      "effects": [
+        {
+          "target": "strength",
+          "op": "add",
+          "expr": "2"
+        },
+        {
+          "target": "strength",
+          "op": "set_buff_duration",
+          "expr": "600"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "7697560b401d3751f772645d7798f66027dc4405f61e70fb37e197b7dfe2576e"
+    },
+    {
+      "name": "item_revive",
+      "description": "",
+      "title": "Revive",
+      "kind": "instant",
+      "uses": 1,
+      "uses_max": 1,
+      "duration_sec": 0,
+      "while": "",
+      "effects": [
+        {
+          "target": "is_dead",
+          "op": "set",
+          "expr": "0"
+        },
+        {
+          "target": "health",
+          "op": "set",
+          "expr": "50"
+        }
+      ],
+      "start": [],
+      "stop": [
+        "on_death_lock"
+      ],
+      "triggers": [],
+      "signature": "4bd0ad66b5ae29466ce78e5f516fb5ef827899557c2b81ad68964eab2850a15f"
+    },
+    {
+      "name": "zone_radiation",
+      "description": "",
+      "title": "Zone: radiation",
+      "kind": "timed",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 1,
+      "while": "",
+      "effects": [
+        {
+          "target": "radiation",
+          "op": "set_buff_rate",
+          "expr": "8"
+        },
+        {
+          "target": "radiation",
+          "op": "set_buff_duration",
+          "expr": "1"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "4a2292eba8b3c2749801b2f6f1a086f7e9c0eb79d4b397c7f3702daa351e18f9"
+    },
+    {
+      "name": "disease_radiation_sickness",
+      "description": "",
+      "title": "Radiation sickness effect",
+      "kind": "passive",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 0,
+      "while": "has_radiation_sickness == 1",
+      "effects": [
+        {
+          "target": "max_health",
+          "op": "add",
+          "expr": "-20"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "6918515d02368405cebf7dae8161894938a3b2275c34ddaf0e69a609ceab767d"
+    },
+    {
+      "name": "on_death_lock",
+      "description": "",
+      "title": "Death: freeze processes",
+      "kind": "passive",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 0,
+      "while": "is_dead == 1",
+      "effects": [
+        {
+          "target": "food",
+          "op": "set_buff_rate",
+          "expr": "0"
+        },
+        {
+          "target": "health",
+          "op": "set_buff_rate",
+          "expr": "0"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "f58c9b5a7e5f26be1e82ce9e9559dc1f7ab17561b3fc1d6e76bdaa77dfaa98c3"
+    },
+    {
+      "name": "nuka_cola",
+      "description": "Charge up with atomic energy!",
+      "title": "Nuka-Cola",
+      "kind": "instant",
+      "uses": 2,
+      "uses_max": 2,
+      "duration_sec": 0,
+      "while": "",
+      "effects": [
+        {
+          "target": "health",
+          "op": "add",
+          "expr": "40"
+        },
+        {
+          "target": "radiation",
+          "op": "add",
+          "expr": "100"
+        },
+        {
+          "target": "water",
+          "op": "add",
+          "expr": "18000"
+        }
+      ],
+      "start": [
+        "nuka_cola_logic"
+      ],
+      "stop": [],
+      "triggers": [
+        {
+          "when": "perk_survivor == 1",
+          "edge": "once",
+          "effects": [
+            {
+              "target": "radiation",
+              "op": "set",
+              "expr": "0"
+            }
+          ],
+          "start": [],
+          "stop": []
+        }
+      ],
+      "signature": "bf25e99d6a27795d3d0cd642993a5a4a948c3457ea81f762a9f89beae0f21b51"
+    },
+    {
+      "name": "nuka_cola_logic",
+      "description": "REMk EIDd CONfQTYk>0 + hangover roll",
+      "title": "Nuka-Cola addiction logic",
+      "kind": "instant",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 0,
+      "while": "",
+      "effects": [],
+      "start": [],
+      "stop": [],
+      "triggers": [
+        {
+          "when": "nuka_addicted == 1",
+          "edge": "once",
+          "effects": [
+            {
+              "target": "nuka_crash_pending",
+              "op": "set",
+              "expr": "1"
+            }
+          ],
+          "start": [
+            "nuka_cola_crash_arm"
+          ],
+          "stop": [
+            "nuka_cola_hangover"
+          ]
+        },
+        {
+          "when": "nuka_addicted == 0 && perk_party_king == 0 && luck < rnd(12)",
+          "edge": "once",
+          "effects": [],
+          "start": [
+            "nuka_cola_crash_arm"
+          ],
+          "stop": []
+        }
+      ],
+      "signature": "33a3c6ee98836f060cf8d6951bfaf490bac65bb37219490405a840a1944baa7e"
+    },
+    {
+      "name": "nuka_cola_crash_arm",
+      "description": "AFT600 then hangover",
+      "title": "Nuka crash delay",
+      "kind": "timed",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 600,
+      "while": "",
+      "effects": [
+        {
+          "target": "nuka_crash_timer",
+          "op": "set",
+          "expr": "600"
+        },
+        {
+          "target": "nuka_crash_timer",
+          "op": "set_buff_rate",
+          "expr": "-1"
+        },
+        {
+          "target": "nuka_crash_timer",
+          "op": "set_buff_duration",
+          "expr": "600"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [
+        {
+          "when": "nuka_crash_timer <= 0",
+          "edge": "on_rise",
+          "effects": [
+            {
+              "target": "nuka_crash_timer",
+              "op": "set_buff_rate",
+              "expr": "0"
+            },
+            {
+              "target": "nuka_crash_pending",
+              "op": "set",
+              "expr": "0"
+            }
+          ],
+          "start": [
+            "nuka_cola_hangover"
+          ],
+          "stop": []
+        }
+      ],
+      "signature": "0e7fb46fc8c098b08a14b3c78e8a4adb53648b9403dcdb6077f47eb33d57d222"
+    },
+    {
+      "name": "nuka_cola_hangover",
+      "description": "TAR8 ADD-2 for 7200s (EID k)",
+      "title": "Nuka hangover",
+      "kind": "timed",
+      "uses": 0,
+      "uses_max": 0,
+      "duration_sec": 7200,
+      "while": "",
+      "effects": [
+        {
+          "target": "strength",
+          "op": "add",
+          "expr": "-2"
+        },
+        {
+          "target": "strength",
+          "op": "set_buff_duration",
+          "expr": "7200"
+        },
+        {
+          "target": "nuka_addicted",
+          "op": "set",
+          "expr": "1"
+        }
+      ],
+      "start": [],
+      "stop": [],
+      "triggers": [],
+      "signature": "31412017f022b3653fe7e4ceab999df1ee3f3af874aec5ef400cc89275443a63"
+    }
+  ]
+}
