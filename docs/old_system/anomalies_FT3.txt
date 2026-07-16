@@ -1,0 +1,16 @@
+FT3a25805_a27756    radcockroach        5rad, 6phy  7   pow17
+FT3a26805_a27756    molerat             5che, 6phy  8   pow19
+FT3a258014          big_rad             14rad       6   pow19
+FT3a25808           small_rad           8rad        6   pow17
+FT3a25809_a27759    scorpion            9rad, 9phy  2   pow20
+FT3a26808           gas                 8che        4   pow19
+FT3s36803           shelter                         4   pow20
+FT3F                finder                          2   pow20
+
+FT3a3485-15_a27851  Freezer           -15temp, phy1
+FT3a25701           Canister            1rad
+FT3eTAR15 SET0 CONv29!=90   Destruct    kill            pow20
+
+FT3i279002300_i258502300    Ramil lazergun explosion    pow20
+FT3i278003200_i258503200    Power armor explosion       pow10
+FT3a27780 Monster ssid

@@ -1,0 +1,10 @@
+{
+  "$schema": "./recipe_instance.schema.json",
+  "scenario_name": "fallout",
+  "instance_id": "deadbeef01",
+  "name": "armor_leather",
+  "equipped": true,
+  "uses_applied": 0,
+  "uses_left": 0,
+  "signature": "d97a18eb132b8a7941a9ad0804c7a0e1cdb2cb10a5f443f261dde2f6bad043b4"
+}

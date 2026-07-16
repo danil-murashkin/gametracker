@@ -1,0 +1,69 @@
+{
+  "$schema": "./character_instance.schema.json",
+  "scenario_name": "fallout",
+  "instance_id": "04a1b2c3d4e5f6",
+  "stats": [
+    {
+      "name": "health",
+      "value": 87,
+      "buff_rate": 1,
+      "buff_duration": 0,
+      "buff_coefficient": 0.87
+    },
+    {
+      "name": "radiation",
+      "value": 12,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "strength",
+      "value": 5,
+      "buff_rate": 0,
+      "buff_duration": 420,
+      "buff_coefficient": 1
+    },
+    {
+      "name": "armor_phys_resist",
+      "value": 15,
+      "buff_rate": 0,
+      "buff_duration": 0,
+      "buff_coefficient": 1
+    }
+  ],
+  "recipes": [
+    {
+      "name": "mech_core",
+      "status": "active",
+      "duration_left_sec": 0,
+      "uses_applied": 0,
+      "uses_left": 0,
+      "signature": "ad258f9f769c70013538e55b7c4945c387ce227862bc9723d1cdee5da4dcfb61"
+    },
+    {
+      "name": "armor_leather",
+      "status": "active",
+      "duration_left_sec": 0,
+      "uses_applied": 0,
+      "uses_left": 0,
+      "signature": "d70914254aa7fc4d527b51431a163dce56b5faf17bc9a90c544366564e27118b"
+    },
+    {
+      "name": "item_speech_strength",
+      "status": "active",
+      "duration_left_sec": 420,
+      "uses_applied": 1,
+      "uses_left": 4,
+      "signature": "0a449b448940750be6f43d703eb384359667dd786e4fce7acaba3fe5859839fa"
+    },
+    {
+      "name": "nuka_cola_hangover",
+      "status": "active",
+      "duration_left_sec": 5400,
+      "uses_applied": 0,
+      "uses_left": 0,
+      "signature": "02c509b05add671fb493e5bd115d686ba2ba9651d909af8b8cd02cee3ec27665"
+    }
+  ]
+}

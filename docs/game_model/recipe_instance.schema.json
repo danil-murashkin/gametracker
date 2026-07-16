@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gametracker.local/schemas/recipe_instance.schema.json",
+  "title": "Gametracker Recipe Instance (NFC item tag)",
+  "type": "object",
+  "required": [
+    "scenario_name",
+    "instance_id",
+    "name",
+    "equipped",
+    "uses_applied",
+    "uses_left",
+    "signature"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "scenario_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Game scenario this item belongs to. PDA rejects tag if != character.scenario_name"
+    },
+    "instance_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]+$",
+      "description": "NFC tag UID, hex without separators"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Recipe name from scenario"
+    },
+    "equipped": {
+      "type": "boolean",
+      "description": "true — worn on a character (signed with K_char); false — free item (signed with K_tag). Equip/unequip changes signing key"
+    },
+    "uses_applied": {
+      "type": "number",
+      "minimum": 0
+    },
+    "uses_left": {
+      "type": "number",
+      "minimum": 0
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
