@@ -172,14 +172,14 @@
     },
     "effect": {
       "type": "object",
-      "required": ["target", "op", "expr"],
+      "required": ["target", "operation", "expr"],
       "additionalProperties": false,
       "properties": {
         "target": {
           "type": "string",
           "description": "stat name"
         },
-        "op": {
+        "operation": {
           "type": "string",
           "enum": [
             "set",

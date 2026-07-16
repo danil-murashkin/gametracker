@@ -1,10 +1,8 @@
 {
   "$schema": "./recipe_instance.schema.json",
   "scenario_name": "ft3",
-  "instance_id": "aabbccddeeff",
   "name": "nuka_cola",
-  "equipped": false,
   "uses_applied": 1,
   "uses_left": 1,
-  "signature": "aeb74afec180cabca6b760245399aa881f19cbc3f949970f2c03122e6ec7d7bf"
+  "signature": "fdc1ba164e3e1a8730c9b2c1d7047c98acae3181e8c8e26c31df4650b613d34e"
 }

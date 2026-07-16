@@ -1,5 +1,6 @@
 # Игровой движок
 
+---
 Две сущности:
 
 
@@ -78,7 +79,7 @@ value += buff_rate * buff_coefficient
 Пример: реген здоровья быстрее при высоком HP — пассивный рецепт каждый тик ставит коэффициент от текущего значения:
 
 ```json
-{ "target": "health", "op": "set_buff_coefficient", "expr": "health / max_health" }
+{ "target": "health", "operation": "set_buff_coefficient", "expr": "health / max_health" }
 ```
 
 При `health = 90`, `max_health = 100`, `buff_rate = 1` → прирост `1 * 0.9` в секунду. При `health = 20` → `1 * 0.2` (медленно).
@@ -151,7 +152,7 @@ value += buff_rate * buff_coefficient
 | Случай | Как уходит с персонажа |
 | ------ | ---------------------- |
 | препарат / timed (`duration_sec > 0`) | по таймеру `duration_left_sec` → 0 → **удалить** |
-| броня / экипировка (`duration_sec = 0`, `equipped`) | только когда **снимешь** (`equipped: false`) |
+| броня / экипировка (`duration_sec = 0`) | только когда **снимешь** (подпись снова ключом метки) |
 | механика (`passive`) | пока в наборе / `stop` |
 
 Пока несколько рецептов в списке — можно делать наложения: `has("item_speech_strength") && has("nuka_cola_hangover")`.
@@ -177,100 +178,124 @@ value += buff_rate * buff_coefficient
 
 ### Экземпляр рецепта на NFC (`recipe_instance`)
 
-Инвентаря нет: предметы реальные — NFC-карты. На карте лежит экземпляр рецепта.
+Инвентаря нет: предметы — NFC-карты.
 
-У **каждой** карты всегда одни и те же поля:
+**Лимит памяти метки: 512 байт.** На карту пишется только компактный JSON (без пробелов, без `$schema`). Типичный размер ~150–200 байт; запас — под NDEF/служебные заголовки чипа.
+
+На тег **не** пишется `instance_id`: UID берётся с чипа при чтении (экономия места + нельзя подделать UID в JSON).
+
+Поля на карте:
 
 
-| Поле            | Тип     | описание |
-| --------------- | ------- | -------- |
-| `scenario_name` | string  | **имя сценария игры** (`fallout`, `ft3`, …). PDA принимает карту только если совпадает с `character_instance.scenario_name` |
-| `instance_id`   | string  | UID метки |
-| `name`          | string  | имя рецепта из сценария |
-| `equipped`      | boolean | `true` — одет / активен на персонаже; `false` — снят |
-| `uses_applied`  | number  | сколько раз уже применили |
-| `uses_left`     | number  | сколько применений осталось |
-| `signature`     | string  | HMAC-SHA256 hex |
+| Поле            | Тип     | лимит     | описание |
+| --------------- | ------- | --------- | -------- |
+| `scenario_name` | string  | ≤ 16      | сценарий игры; должен совпадать с персонажем |
+| `name`          | string  | ≤ 32      | имя рецепта из сценария |
+| `uses_applied`  | integer | 0…65535   | сколько раз применили |
+| `uses_left`     | integer | 0…65535   | сколько осталось |
+| `signature`     | string  | 64 hex    | HMAC-SHA256 |
 
-Инвариант при `uses_max > 0`: `uses_applied + uses_left == uses_max` (из сценария).
+Инвариант при `uses_max > 0`: `uses_applied + uses_left == uses_max`. При `uses_max: 0` оба `0` (броня).
+
+Одет / снят — **отдельного поля нет**: по ключу подписи (`K_char` / `K_tag`) и счётчикам `uses_*`.
+
+Запись на метку (wire):
+
+```text
+{"scenario_name":"ft3","name":"nuka_cola","uses_applied":1,"uses_left":1,"signature":"…"}
+```
+
+≈ 152 байта UTF-8 — укладывается в 512.
 
 #### Одеть / снять
 
-Это работа с рецептом, не с инвентарём. **При одевании и снятии меняется ключ подписи** — просто переключить `equipped` без PDA нельзя.
+**При одевании и снятии меняется ключ подписи.**
 
-| Действие | На NFC | Ключ подписи | На персонаже |
-| -------- | ------ | ------------ | ------------ |
-| **Одеть** | `equipped: true`, переподписать | ключ **персонажа** (метка привязана к носителю) | добавить рецепт `active`, `effects` / `start` |
-| **Снять** | `equipped: false`, переподписать | ключ **метки** (свободный предмет) | убрать рецепт (`stop`), снять эффекты |
+| Действие | На NFC | Ключ | На персонаже |
+| -------- | ------ | ---- | ------------ |
+| **Одеть** | переподписать те же `uses_*` | `K_char` (UID метки + персонаж) | рецепт `active`, `effects` / `start` |
+| **Снять** | переподписать те же `uses_*` | `K_tag` (только UID метки) | убрать рецепт (`stop`) |
 
-Если `equipped: true` — карту нельзя «одеть» на другого: подпись с чужим ключом не сойдётся.
+Подпись с `K_char` этого персонажа → **одет**; с `K_tag` → **свободен**.
 
-Расходники (стимпак, кола): `equipped` всегда `false`; ключ метки; сканирование = применение (`uses_*`).
+Расходники: всегда `K_tag`; меняются `uses_applied` / `uses_left`.
 
-#### Применение (расход `uses`, если `uses_max > 0`)
+#### Применение (если `uses_max > 0`)
 
-1. проверить `scenario_name` и подпись (ключ метки, `equipped: false`)
+1. прочитать UID с чипа + JSON; проверить `scenario_name` и подпись (`K_tag`)
 2. если `uses_left <= 0` — отказ
-3. выполнить эффекты рецепта из сценария
+3. эффекты из сценария
 4. `uses_applied += 1`, `uses_left -= 1`
-5. пересчитать `signature` тем же ключом метки и записать на тег
+5. переподписать и записать компактный JSON (≤ 512 байт)
 
 ### `signature` (экземпляр на NFC)
 
-1. `body = { "name", "equipped", "uses_applied", "uses_left" }` — канонический JSON
-2. `payload = instance_id + "|" + scenario_name + "|" + canonical_json(body)`
-3. выбрать ключ:
-   - `equipped: false` → `instance_key = K_tag` (из UID метки)
-   - `equipped: true` → `instance_key = K_char` (из UID метки **и** `instance_id` персонажа)
-4. `signature = HMAC-SHA256(payload, instance_key)` в hex (64 символа)
-
-`K_tag` и `K_char` выводятся в прошивке PDA (как шифрование FT3), в JSON не хранятся. Смена `equipped` без смены ключа → подпись невалидна.
+1. `body = { "name", "uses_applied", "uses_left" }` — канонический JSON
+2. `payload = uid + "|" + scenario_name + "|" + canonical_json(body)` — `uid` с чипа
+3. ключ: свободен → `K_tag`; одет → `K_char`
+4. `signature = HMAC-SHA256(payload, key)` в hex (64 символа)
 
 ### Пример: тег с бронёй (одета)
 
-```json
-{
-  "scenario_name": "fallout",
-  "instance_id": "deadbeef01",
-  "name": "armor_leather",
-  "equipped": true,
-  "uses_applied": 0,
-  "uses_left": 0,
-  "signature": "d97a18eb132b8a7941a9ad0804c7a0e1cdb2cb10a5f443f261dde2f6bad043b4"
-}
-```
-
-Полный пример: `recipe_instance.armor.example.json`.
-
-### Пример: тег со стимпаком (расходник)
+UID чипа (не в JSON): `deadbeef01`
 
 ```json
-{
-  "scenario_name": "fallout",
-  "instance_id": "04a1b2c3d4e5f6",
-  "name": "item_stimpak",
-  "equipped": false,
-  "uses_applied": 0,
-  "uses_left": 1,
-  "signature": "232c4e9490ba2eb172b476231b4e050bf56384a3b13b20092ce3cd2e93f728f5"
-}
+{"scenario_name":"fallout","name":"armor_leather","uses_applied":0,"uses_left":0,"signature":"80ca836666b1ba4fea36df63ee3203a52d0ab5b1498b3d606037cea3ad5c806a"}
 ```
 
-### Пример: тег с Ядер-Колой после одного глотка
+### Пример: тег со стимпаком
+
+UID: `04a1b2c3d4e5f6`
 
 ```json
-{
-  "scenario_name": "ft3",
-  "instance_id": "aabbccddeeff",
-  "name": "nuka_cola",
-  "equipped": false,
-  "uses_applied": 1,
-  "uses_left": 1,
-  "signature": "aeb74afec180cabca6b760245399aa881f19cbc3f949970f2c03122e6ec7d7bf"
-}
+{"scenario_name":"fallout","name":"item_stimpak","uses_applied":0,"uses_left":1,"signature":"b00e9fc48346a69be33d874a485bcf5475d7daef4596a7f1312682f73ca01b40"}
 ```
 
-Полный пример: `recipe_instance.example.json`.
+### Пример: тег с Ядер-Колой (1 из 2)
+
+UID: `aabbccddeeff`
+
+```json
+{"scenario_name":"ft3","name":"nuka_cola","uses_applied":1,"uses_left":1,"signature":"fdc1ba164e3e1a8730c9b2c1d7047c98acae3181e8c8e26c31df4650b613d34e"}
+```
+
+Файлы с отступами — для чтения в репо (`recipe_instance.example.json`); на чип — одна строка без пробелов.
+
+#### Запись / чтение NFC (без Base64)
+
+На метку пишутся **сырые байты** (NDEF payload / user memory). Base64 не нужен — это только для текста в чате/файлах.
+
+На карту идёт **только экземпляр** (`uses_*` + подпись), не блок из 4 рецептов Ядер-Колы. Полный сценарий (~2.3 КБ JSON / ~0.7 КБ zlib) живёт в прошивке PDA; даже сжатым в **512 байт NFC не влезает**.
+
+| Формат на NFC | Размер | Заметка |
+| ------------- | ------ | ------- |
+| Компактный JSON (UTF-8 байты) | ~152 | можно писать как есть |
+| **Бинарный pack** | ~50 | предпочтительно |
+| Словарь токенов (FT3-стиль) | ~86 | как старый `pda_8266` |
+| zlib всего сценария | ~734 | **не для NFC** (> 512) |
+
+##### Ядер-Кола на NFC (1 из 2) — что реально пишется
+
+Компактный JSON как байты (~152):
+
+```text
+{"scenario_name":"ft3","name":"nuka_cola","uses_applied":1,"uses_left":1,"signature":"fdc1ba164e3e1a8730c9b2c1d7047c98acae3181e8c8e26c31df4650b613d34e"}
+```
+
+Бинарный pack (~50 байт) — layout и hex для `Write`/`Read`:
+
+```text
+u8 sn_len | sn | u8 name_len | name | u16 le uses_applied | u16 le uses_left | 32 bytes HMAC
+```
+
+```text
+03 667433
+09 6e756b615f636f6c61
+0100 0100
+fdc1ba164e3e1a8730c9b2c1d7047c98acae3181e8c8e26c31df4650b613d34e
+```
+
+PDA после чтения по `scenario_name` + `name` подтягивает эффекты/триггеры из локальной модели.
 
 
 
@@ -280,7 +305,7 @@ value += buff_rate * buff_coefficient
 | Поле     | Значения                                                  |
 | -------- | --------------------------------------------------------- |
 | `target` | `name` стата                                              |
-| `op`     | `set`, `add`, `set_buff_rate`, `add_buff_rate`, `set_buff_duration`, `set_buff_coefficient`, `add_buff_coefficient` |
+| `operation`     | `set`, `add`, `set_buff_rate`, `add_buff_rate`, `set_buff_duration`, `set_buff_coefficient`, `add_buff_coefficient` |
 | `expr`   | число или формула                                         |
 
 
@@ -311,7 +336,7 @@ value += buff_rate * buff_coefficient
   "duration_sec": 0,
   "while": "",
   "effects": [
-    { "target": "health", "op": "add", "expr": "35" }
+    { "target": "health", "operation": "add", "expr": "35" }
   ],
   "start": [],
   "stop": [],
@@ -363,9 +388,9 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "duration_sec": 0,
       "while": "",
       "effects": [
-        { "target": "health", "op": "add", "expr": "40" },
-        { "target": "radiation", "op": "add", "expr": "100" },
-        { "target": "water", "op": "add", "expr": "18000" }
+        { "target": "health", "operation": "add", "expr": "40" },
+        { "target": "radiation", "operation": "add", "expr": "100" },
+        { "target": "water", "operation": "add", "expr": "18000" }
       ],
       "start": ["nuka_cola_logic"],
       "stop": [],
@@ -374,7 +399,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
           "when": "perk_survivor == 1",
           "edge": "once",
           "effects": [
-            { "target": "radiation", "op": "set", "expr": "0" }
+            { "target": "radiation", "operation": "set", "expr": "0" }
           ],
           "start": [],
           "stop": []
@@ -398,7 +423,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
           "when": "nuka_addicted == 1",
           "edge": "once",
           "effects": [
-            { "target": "nuka_crash_pending", "op": "set", "expr": "1" }
+            { "target": "nuka_crash_pending", "operation": "set", "expr": "1" }
           ],
           "start": ["nuka_cola_crash_arm"],
           "stop": ["nuka_cola_hangover"]
@@ -411,7 +436,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
           "stop": []
         }
       ],
-      "signature": "c506ceb543068fdc4bbe4ea816ca6dc8514ec23ce7f3ce59df7ed4a1f3a4e33c"
+      "signature": "172f3fa5f11d2dcb4306111ff896f0e51bc954227c6958062e17b8b9488a7ed5"
     },
     {
       "name": "nuka_cola_crash_arm",
@@ -422,9 +447,9 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "duration_sec": 600,
       "while": "",
       "effects": [
-        { "target": "nuka_crash_timer", "op": "set", "expr": "600" },
-        { "target": "nuka_crash_timer", "op": "set_buff_rate", "expr": "-1" },
-        { "target": "nuka_crash_timer", "op": "set_buff_duration", "expr": "600" }
+        { "target": "nuka_crash_timer", "operation": "set", "expr": "600" },
+        { "target": "nuka_crash_timer", "operation": "set_buff_rate", "expr": "-1" },
+        { "target": "nuka_crash_timer", "operation": "set_buff_duration", "expr": "600" }
       ],
       "start": [],
       "stop": [],
@@ -433,14 +458,14 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
           "when": "nuka_crash_timer <= 0",
           "edge": "on_rise",
           "effects": [
-            { "target": "nuka_crash_timer", "op": "set_buff_rate", "expr": "0" },
-            { "target": "nuka_crash_pending", "op": "set", "expr": "0" }
+            { "target": "nuka_crash_timer", "operation": "set_buff_rate", "expr": "0" },
+            { "target": "nuka_crash_pending", "operation": "set", "expr": "0" }
           ],
           "start": ["nuka_cola_hangover"],
           "stop": []
         }
       ],
-      "signature": "7a5f2ce30accea7ff4282f1ef29d3a6934c4ba9383a7d5d246ca0f49b695cfdd"
+      "signature": "aa4d08ac7498fbe25792074cd9357c0f036bdd78cb3c1d4c1dff11f4de157981"
     },
     {
       "name": "nuka_cola_hangover",
@@ -451,14 +476,14 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "duration_sec": 7200,
       "while": "",
       "effects": [
-        { "target": "strength", "op": "add", "expr": "-2" },
-        { "target": "strength", "op": "set_buff_duration", "expr": "7200" },
-        { "target": "nuka_addicted", "op": "set", "expr": "1" }
+        { "target": "strength", "operation": "add", "expr": "-2" },
+        { "target": "strength", "operation": "set_buff_duration", "expr": "7200" },
+        { "target": "nuka_addicted", "operation": "set", "expr": "1" }
       ],
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "8f479fe9444e0fa740552f0f6195c44261c126c683abe106c34bd39892f0d3ff"
+      "signature": "4b7847d49790e9eaabd9d29262b7c4c2e43f3c0ecaf58a09520abda703bd9e23"
     }
   ]
 }
@@ -561,9 +586,9 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
 - `active` — механика, **одетый** предмет, **уже применённый** препарат (эффекты сделаны, запись для сверки и синергий)
 - `pending` — ждёт активации по триггеру / `start`
 
-Одеть броню: NFC `equipped: true`, подпись ключом **персонажа** + рецепт на персонаже `active`, `duration_left_sec: 0`.  
-Снять: NFC `equipped: false`, подпись ключом **метки** + убрать рецепт.  
-Препарат: эффекты сразу + `duration_left_sec = duration_sec`; по таймеру — удалить запись.
+Одеть броню: подпись ключом **персонажа** (`K_char`) + рецепт на персонаже `active`, `duration_left_sec: 0`.  
+Снять: подпись ключом **метки** (`K_tag`) + убрать рецепт.  
+Препарат: эффекты сразу + обновить `uses_applied` / `uses_left`; при `duration_sec > 0` — запись на персонаже до таймера.
 
 ### `signature` (рецепт на персонаже)
 
@@ -585,4 +610,4 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
 }
 ```
 
-Сценарий неизменяем на PDA. Состояние персонажа — в `character_instance` (обязательно с `scenario_name`). Предметы — NFC-карты (`recipe_instance` с тем же `scenario_name` и флагом `equipped`).
+Сценарий неизменяем на PDA. Состояние персонажа — в `character_instance`. Предметы — NFC ≤ **512 байт** (`recipe_instance`: компактный JSON + подпись; UID с чипа; одет/снят — по `K_char` / `K_tag`).
