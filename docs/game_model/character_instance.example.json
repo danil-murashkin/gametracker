@@ -39,7 +39,7 @@
       "duration_left_sec": 0,
       "uses_applied": 0,
       "uses_left": 0,
-      "signature": "ad258f9f769c70013538e55b7c4945c387ce227862bc9723d1cdee5da4dcfb61"
+      "signature": "ad258f9f"
     },
     {
       "name": "armor_leather",
@@ -47,7 +47,7 @@
       "duration_left_sec": 0,
       "uses_applied": 0,
       "uses_left": 0,
-      "signature": "d70914254aa7fc4d527b51431a163dce56b5faf17bc9a90c544366564e27118b"
+      "signature": "d7091425"
     },
     {
       "name": "item_speech_strength",
@@ -55,7 +55,7 @@
       "duration_left_sec": 420,
       "uses_applied": 1,
       "uses_left": 4,
-      "signature": "0a449b448940750be6f43d703eb384359667dd786e4fce7acaba3fe5859839fa"
+      "signature": "0a449b44"
     },
     {
       "name": "nuka_cola_hangover",
@@ -63,7 +63,7 @@
       "duration_left_sec": 5400,
       "uses_applied": 0,
       "uses_left": 0,
-      "signature": "02c509b05add671fb493e5bd115d686ba2ba9651d909af8b8cd02cee3ec27665"
+      "signature": "02c509b0"
     }
   ]
 }

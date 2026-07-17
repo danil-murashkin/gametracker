@@ -124,8 +124,9 @@
         },
         "while": { "type": "string" },
         "effects": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/effect" }
+          "type": "object",
+          "description": "Map stat name → parameter deltas. Missing key = no change. 0 = set to 0; nonzero = add that amount",
+          "additionalProperties": { "$ref": "#/$defs/stat_patch" }
         },
         "start": {
           "type": "array",
@@ -141,8 +142,8 @@
         },
         "signature": {
           "type": "string",
-          "pattern": "^[a-f0-9]{64}$",
-          "description": "HMAC-SHA256 hex over recipe payload (all fields except signature) and scenario_name. Engine rejects recipe if signature mismatch"
+          "pattern": "^[a-f0-9]{8}$",
+          "description": "HMAC-SHA256 truncated to 4 bytes (8 hex) over recipe payload (all fields except signature) and scenario_name. Engine rejects recipe if signature mismatch"
         }
       }
     },
@@ -157,8 +158,8 @@
           "enum": ["while_true", "once", "on_rise", "on_fall"]
         },
         "effects": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/effect" }
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/stat_patch" }
         },
         "start": {
           "type": "array",
@@ -170,28 +171,15 @@
         }
       }
     },
-    "effect": {
+    "stat_patch": {
       "type": "object",
-      "required": ["target", "operation", "expr"],
       "additionalProperties": false,
+      "description": "Only listed parameters change. Absent = leave as is. 0 = assign 0. Nonzero = add (e.g. -1 subtract one, +1 add one)",
       "properties": {
-        "target": {
-          "type": "string",
-          "description": "stat name"
-        },
-        "operation": {
-          "type": "string",
-          "enum": [
-            "set",
-            "add",
-            "set_buff_rate",
-            "add_buff_rate",
-            "set_buff_duration",
-            "set_buff_coefficient",
-            "add_buff_coefficient"
-          ]
-        },
-        "expr": { "type": "string" }
+        "value": { "type": "number" },
+        "buff_rate": { "type": "number" },
+        "buff_duration": { "type": "number" },
+        "buff_coefficient": { "type": "number" }
       }
     }
   }

@@ -220,26 +220,18 @@
       "uses_max": 0,
       "duration_sec": 0,
       "while": "",
-      "effects": [
-        {
-          "target": "max_health",
-          "operation": "set",
-          "expr": "100 + strength * endurance * 10"
-        }
-      ],
+      "effects": {},
       "start": [],
       "stop": [],
       "triggers": [
         {
           "when": "health <= 0 && is_dead == 0",
           "edge": "on_rise",
-          "effects": [
-            {
-              "target": "is_dead",
-              "operation": "set",
-              "expr": "1"
+          "effects": {
+            "is_dead": {
+              "value": 1
             }
-          ],
+          },
           "start": [
             "on_death_lock"
           ],
@@ -248,13 +240,11 @@
         {
           "when": "radiation >= 200 && has_radiation_sickness == 0",
           "edge": "on_rise",
-          "effects": [
-            {
-              "target": "has_radiation_sickness",
-              "operation": "set",
-              "expr": "1"
+          "effects": {
+            "has_radiation_sickness": {
+              "value": 1
             }
-          ],
+          },
           "start": [
             "disease_radiation_sickness"
           ],
@@ -263,14 +253,14 @@
         {
           "when": "has_radiation_sickness == 0",
           "edge": "on_fall",
-          "effects": [],
+          "effects": {},
           "start": [],
           "stop": [
             "disease_radiation_sickness"
           ]
         }
       ],
-      "signature": "801d2e43a80c31c2b7caf2b6baa459ac0c1b3e22e0ac921edd537d95261c581f"
+      "signature": "3210fad8"
     },
     {
       "name": "mech_starvation_damage",
@@ -281,17 +271,15 @@
       "uses_max": 0,
       "duration_sec": 0,
       "while": "food <= 0 && is_dead == 0",
-      "effects": [
-        {
-          "target": "health",
-          "operation": "set_buff_rate",
-          "expr": "-1"
+      "effects": {
+        "health": {
+          "buff_rate": -1
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "a083e08e061736376c08e6ffed02b348d0b79705e6d266557d4c81a3e378df74"
+      "signature": "0df5a077"
     },
     {
       "name": "armor_leather",
@@ -302,17 +290,15 @@
       "uses_max": 0,
       "duration_sec": 0,
       "while": "",
-      "effects": [
-        {
-          "target": "armor_phys_resist",
-          "operation": "set",
-          "expr": "5"
+      "effects": {
+        "armor_phys_resist": {
+          "value": 5
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "f904714826c5df26c9bd24c2d331375f3462921a9e545fa1551b219fad81edf4"
+      "signature": "ed04038f"
     },
     {
       "name": "item_stimpak",
@@ -323,17 +309,15 @@
       "uses_max": 1,
       "duration_sec": 0,
       "while": "",
-      "effects": [
-        {
-          "target": "health",
-          "operation": "add",
-          "expr": "35"
+      "effects": {
+        "health": {
+          "value": 35
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "5169b3878ce88343e356b1d8f7883aaf199f1408984140cf67a3de1c93f6ff22"
+      "signature": "ae0bc98d"
     },
     {
       "name": "item_speech_strength",
@@ -344,22 +328,16 @@
       "uses_max": 5,
       "duration_sec": 600,
       "while": "",
-      "effects": [
-        {
-          "target": "strength",
-          "operation": "add",
-          "expr": "2"
-        },
-        {
-          "target": "strength",
-          "operation": "set_buff_duration",
-          "expr": "600"
+      "effects": {
+        "strength": {
+          "value": 2,
+          "buff_duration": 600
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "76f2ccf402c3faad6b8ba88b0dc0ab32c5cc6b4c20cdfc64d5060ea6a605ac85"
+      "signature": "490cdb50"
     },
     {
       "name": "item_revive",
@@ -370,24 +348,20 @@
       "uses_max": 1,
       "duration_sec": 0,
       "while": "",
-      "effects": [
-        {
-          "target": "is_dead",
-          "operation": "set",
-          "expr": "0"
+      "effects": {
+        "is_dead": {
+          "value": 0
         },
-        {
-          "target": "health",
-          "operation": "set",
-          "expr": "50"
+        "health": {
+          "value": 50
         }
-      ],
+      },
       "start": [],
       "stop": [
         "on_death_lock"
       ],
       "triggers": [],
-      "signature": "b9b8d1119c1c1e111dda38e673daedbfc0703c874e96795aa125dafa49e15687"
+      "signature": "7c3508c5"
     },
     {
       "name": "zone_radiation",
@@ -398,22 +372,16 @@
       "uses_max": 0,
       "duration_sec": 1,
       "while": "",
-      "effects": [
-        {
-          "target": "radiation",
-          "operation": "set_buff_rate",
-          "expr": "8"
-        },
-        {
-          "target": "radiation",
-          "operation": "set_buff_duration",
-          "expr": "1"
+      "effects": {
+        "radiation": {
+          "buff_rate": 8,
+          "buff_duration": 1
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "42087aaba791e5bbaf58c0346ea93b8f75b6b61238954ac6ce436d5fc72a1469"
+      "signature": "e91029cb"
     },
     {
       "name": "disease_radiation_sickness",
@@ -424,17 +392,15 @@
       "uses_max": 0,
       "duration_sec": 0,
       "while": "has_radiation_sickness == 1",
-      "effects": [
-        {
-          "target": "max_health",
-          "operation": "add",
-          "expr": "-20"
+      "effects": {
+        "max_health": {
+          "value": -20
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "d15a5c9fe4e11f82f9f228a3997a7deffb8a64f624d624cfd99b27f9d9c519a3"
+      "signature": "8d51df5d"
     },
     {
       "name": "on_death_lock",
@@ -445,22 +411,18 @@
       "uses_max": 0,
       "duration_sec": 0,
       "while": "is_dead == 1",
-      "effects": [
-        {
-          "target": "food",
-          "operation": "set_buff_rate",
-          "expr": "0"
+      "effects": {
+        "food": {
+          "buff_rate": 0
         },
-        {
-          "target": "health",
-          "operation": "set_buff_rate",
-          "expr": "0"
+        "health": {
+          "buff_rate": 0
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "f3eb7a3b6eeab464505ed73732973f0d8b74020651f0e45fb05ba7b969ec7829"
+      "signature": "1fd1352c"
     },
     {
       "name": "nuka_cola",
@@ -471,23 +433,17 @@
       "uses_max": 2,
       "duration_sec": 0,
       "while": "",
-      "effects": [
-        {
-          "target": "health",
-          "operation": "add",
-          "expr": "40"
+      "effects": {
+        "health": {
+          "value": 40
         },
-        {
-          "target": "radiation",
-          "operation": "add",
-          "expr": "100"
+        "radiation": {
+          "value": 100
         },
-        {
-          "target": "water",
-          "operation": "add",
-          "expr": "18000"
+        "water": {
+          "value": 18000
         }
-      ],
+      },
       "start": [
         "nuka_cola_logic"
       ],
@@ -496,18 +452,16 @@
         {
           "when": "perk_survivor == 1",
           "edge": "once",
-          "effects": [
-            {
-              "target": "radiation",
-              "operation": "set",
-              "expr": "0"
+          "effects": {
+            "radiation": {
+              "value": 0
             }
-          ],
+          },
           "start": [],
           "stop": []
         }
       ],
-      "signature": "2b5f40f388a893e3666acf59b799f3aa341119a1b5d3322c185aaf4e517fe699"
+      "signature": "091da7e3"
     },
     {
       "name": "nuka_cola_logic",
@@ -518,20 +472,18 @@
       "uses_max": 0,
       "duration_sec": 0,
       "while": "",
-      "effects": [],
+      "effects": {},
       "start": [],
       "stop": [],
       "triggers": [
         {
           "when": "nuka_addicted == 1",
           "edge": "once",
-          "effects": [
-            {
-              "target": "nuka_crash_pending",
-              "operation": "set",
-              "expr": "1"
+          "effects": {
+            "nuka_crash_pending": {
+              "value": 1
             }
-          ],
+          },
           "start": [
             "nuka_cola_crash_arm"
           ],
@@ -542,14 +494,14 @@
         {
           "when": "nuka_addicted == 0 && perk_party_king == 0 && luck < rnd(12)",
           "edge": "once",
-          "effects": [],
+          "effects": {},
           "start": [
             "nuka_cola_crash_arm"
           ],
           "stop": []
         }
       ],
-      "signature": "d6e8bf332cdcaff1d5a92ff8d23f163812074833a38b096726282ce1fda61d38"
+      "signature": "2409caa6"
     },
     {
       "name": "nuka_cola_crash_arm",
@@ -560,48 +512,34 @@
       "uses_max": 0,
       "duration_sec": 600,
       "while": "",
-      "effects": [
-        {
-          "target": "nuka_crash_timer",
-          "operation": "set",
-          "expr": "600"
-        },
-        {
-          "target": "nuka_crash_timer",
-          "operation": "set_buff_rate",
-          "expr": "-1"
-        },
-        {
-          "target": "nuka_crash_timer",
-          "operation": "set_buff_duration",
-          "expr": "600"
+      "effects": {
+        "nuka_crash_timer": {
+          "value": 600,
+          "buff_rate": -1,
+          "buff_duration": 600
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [
         {
           "when": "nuka_crash_timer <= 0",
           "edge": "on_rise",
-          "effects": [
-            {
-              "target": "nuka_crash_timer",
-              "operation": "set_buff_rate",
-              "expr": "0"
+          "effects": {
+            "nuka_crash_timer": {
+              "buff_rate": 0
             },
-            {
-              "target": "nuka_crash_pending",
-              "operation": "set",
-              "expr": "0"
+            "nuka_crash_pending": {
+              "value": 0
             }
-          ],
+          },
           "start": [
             "nuka_cola_hangover"
           ],
           "stop": []
         }
       ],
-      "signature": "9e4b3e68857363469289e124db3d8a0c0db7a9a5c99a4d4aa95a366996983b43"
+      "signature": "bb9a2247"
     },
     {
       "name": "nuka_cola_hangover",
@@ -612,27 +550,19 @@
       "uses_max": 0,
       "duration_sec": 7200,
       "while": "",
-      "effects": [
-        {
-          "target": "strength",
-          "operation": "add",
-          "expr": "-2"
+      "effects": {
+        "strength": {
+          "value": -2,
+          "buff_duration": 7200
         },
-        {
-          "target": "strength",
-          "operation": "set_buff_duration",
-          "expr": "7200"
-        },
-        {
-          "target": "nuka_addicted",
-          "operation": "set",
-          "expr": "1"
+        "nuka_addicted": {
+          "value": 1
         }
-      ],
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "ee2685878c351d39432c2e848f07df202481ea2ae78ef1f69ad77b1dbb4d52ee"
+      "signature": "b9b714b1"
     }
   ]
 }

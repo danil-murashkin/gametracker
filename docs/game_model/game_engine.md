@@ -74,17 +74,7 @@ value += buff_rate * buff_coefficient
 
 Отдельно от `duration_sec` у рецепта: рецепт живёт своё время, а на стате — свой таймер и коэффициент.
 
-Рецепт меняет их эффектами: `set_buff_rate` / `add_buff_rate`, `set_buff_duration`, `set_buff_coefficient` / `add_buff_coefficient`.
-
-Пример: реген здоровья быстрее при высоком HP — пассивный рецепт каждый тик ставит коэффициент от текущего значения:
-
-```json
-{ "target": "health", "operation": "set_buff_coefficient", "expr": "health / max_health" }
-```
-
-При `health = 90`, `max_health = 100`, `buff_rate = 1` → прирост `1 * 0.9` в секунду. При `health = 20` → `1 * 0.2` (медленно).
-
-В сценарии обычно `buff_coefficient: 1`, `buff_duration: 0`. Текущие значения — в `character_instance.stats`. При окончании таймера (`buff_duration` → 0) движок сбрасывает временные `buff_rate` и `buff_coefficient` к значениям из сценария.
+Рецепт меняет параметры стата через `effects` (см. ниже): нет записи — не трогать; `0` — обнулить; иначе прибавить число.
 
 
 
@@ -133,11 +123,11 @@ value += buff_rate * buff_coefficient
 | `uses_max`     | number                                      | максимум применений; `0` — без лимита        |
 | `duration_sec` | number                                      | таймер присутствия на персонаже; `0` — без таймера (броня/экипировка — пока не снимешь) |
 | `while`        | string                                      | `""` — без условия                           |
-| `effects`      | array                                       | `[]`                                         |
+| `effects`      | object                                      | стат → какие параметры менять; `{}` — ничего |
 | `start`        | array                                       | `[]` — имена рецептов (`name`)               |
 | `stop`         | array                                       | `[]` — имена рецептов (`name`)               |
 | `triggers`     | array                                       | `[]`                                         |
-| `signature`    | string                                      | HMAC-SHA256 hex, см. ниже                    |
+| `signature`    | string                                      | 8 hex (HMAC усечён до 4 байт), см. ниже      |
 
 
 `kind`:
@@ -146,6 +136,29 @@ value += buff_rate * buff_coefficient
 - `instant` — эффекты **один раз** при применении; при `duration_sec > 0` запись ещё висит как маркер
 - `timed` — живёт `duration_sec`, потом удаляется
 - `passive` — пока в активном наборе (механика мира, **одетая броня** и т.п.)
+
+### Эффекты рецепта
+
+Рецепт — перечень статов и дельт их параметров. Нет ключа — параметр не трогаем.
+
+```json
+"effects": {
+  "health": { "value": 35 },
+  "strength": { "value": -2, "buff_duration": 7200 },
+  "radiation": { "value": 0 }
+}
+```
+
+Для **каждого** указанного параметра стата (`value`, `buff_rate`, `buff_duration`, `buff_coefficient`):
+
+| Запись | Действие |
+| ------ | -------- |
+| нет ключа | ничего не делать |
+| `0` | выставить **0** |
+| `+N` (например `1`, `35`) | **прибавить** N |
+| `-N` (например `-1`, `-2`) | **отнять** N |
+
+Примеры: `value: 1` → +1 к значению; `value: -1` → −1; `value: 0` → значение = 0; нет `buff_rate` → rate не меняется.
 
 Эффекты при применении исполняются сразу. Запись рецепта на персонаже:
 
@@ -170,7 +183,7 @@ value += buff_rate * buff_coefficient
 1. Взять все поля рецепта **кроме** `signature`
 2. Сериализовать в канонический JSON (ключи отсортированы, без пробелов)
 3. `payload = scenario_name + "|" + canonical_json`
-4. `signature = HMAC-SHA256(payload, engine_key)` в hex (64 символа)
+4. `signature = HMAC-SHA256(payload, engine_key)` → первые **4 байта** в hex (**8 символов**)
 
 Любое изменение эффектов, `triggers` и т.д. ломает подпись. Пересчитать подпись может только автор сценария (редактор / мастер), не PDA игрока.
 
@@ -193,7 +206,7 @@ value += buff_rate * buff_coefficient
 | `name`          | string  | ≤ 32      | имя рецепта из сценария |
 | `uses_applied`  | integer | 0…65535   | сколько раз применили |
 | `uses_left`     | integer | 0…65535   | сколько осталось |
-| `signature`     | string  | 64 hex    | HMAC-SHA256 |
+| `signature`     | string  | **8 hex** | HMAC-SHA256, обрезан до 4 байт |
 
 Инвариант при `uses_max > 0`: `uses_applied + uses_left == uses_max`. При `uses_max: 0` оба `0` (броня).
 
@@ -233,14 +246,14 @@ value += buff_rate * buff_coefficient
 1. `body = { "name", "uses_applied", "uses_left" }` — канонический JSON
 2. `payload = uid + "|" + scenario_name + "|" + canonical_json(body)` — `uid` с чипа
 3. ключ: свободен → `K_tag`; одет → `K_char`
-4. `signature = HMAC-SHA256(payload, key)` в hex (64 символа)
+4. `signature = HMAC-SHA256(payload, key)` → первые **4 байта** в hex (**8 символов**)
 
 ### Пример: тег с бронёй (одета)
 
 UID чипа (не в JSON): `deadbeef01`
 
 ```json
-{"scenario_name":"fallout","name":"armor_leather","uses_applied":0,"uses_left":0,"signature":"80ca836666b1ba4fea36df63ee3203a52d0ab5b1498b3d606037cea3ad5c806a"}
+{"scenario_name":"fallout","name":"armor_leather","uses_applied":0,"uses_left":0,"signature":"80ca8366"}
 ```
 
 ### Пример: тег со стимпаком
@@ -248,7 +261,7 @@ UID чипа (не в JSON): `deadbeef01`
 UID: `04a1b2c3d4e5f6`
 
 ```json
-{"scenario_name":"fallout","name":"item_stimpak","uses_applied":0,"uses_left":1,"signature":"b00e9fc48346a69be33d874a485bcf5475d7daef4596a7f1312682f73ca01b40"}
+{"scenario_name":"fallout","name":"item_stimpak","uses_applied":0,"uses_left":1,"signature":"b00e9fc4"}
 ```
 
 ### Пример: тег с Ядер-Колой (1 из 2)
@@ -256,7 +269,7 @@ UID: `04a1b2c3d4e5f6`
 UID: `aabbccddeeff`
 
 ```json
-{"scenario_name":"ft3","name":"nuka_cola","uses_applied":1,"uses_left":1,"signature":"fdc1ba164e3e1a8730c9b2c1d7047c98acae3181e8c8e26c31df4650b613d34e"}
+{"scenario_name":"ft3","name":"nuka_cola","uses_applied":1,"uses_left":1,"signature":"fdc1ba16"}
 ```
 
 Файлы с отступами — для чтения в репо (`recipe_instance.example.json`); на чип — одна строка без пробелов.
@@ -279,34 +292,23 @@ UID: `aabbccddeeff`
 Компактный JSON как байты (~152):
 
 ```text
-{"scenario_name":"ft3","name":"nuka_cola","uses_applied":1,"uses_left":1,"signature":"fdc1ba164e3e1a8730c9b2c1d7047c98acae3181e8c8e26c31df4650b613d34e"}
+{"scenario_name":"ft3","name":"nuka_cola","uses_applied":1,"uses_left":1,"signature":"fdc1ba16"}
 ```
 
 Бинарный pack (~50 байт) — layout и hex для `Write`/`Read`:
 
 ```text
-u8 sn_len | sn | u8 name_len | name | u16 le uses_applied | u16 le uses_left | 32 bytes HMAC
+u8 sn_len | sn | u8 name_len | name | u16 le uses_applied | u16 le uses_left | 4 bytes HMAC
 ```
 
 ```text
 03 667433
 09 6e756b615f636f6c61
 0100 0100
-fdc1ba164e3e1a8730c9b2c1d7047c98acae3181e8c8e26c31df4650b613d34e
+fd c1 ba 16
 ```
 
 PDA после чтения по `scenario_name` + `name` подтягивает эффекты/триггеры из локальной модели.
-
-
-
-### Эффект
-
-
-| Поле     | Значения                                                  |
-| -------- | --------------------------------------------------------- |
-| `target` | `name` стата                                              |
-| `operation`     | `set`, `add`, `set_buff_rate`, `add_buff_rate`, `set_buff_duration`, `set_buff_coefficient`, `add_buff_coefficient` |
-| `expr`   | число или формула                                         |
 
 
 
@@ -335,17 +337,19 @@ PDA после чтения по `scenario_name` + `name` подтягивает
   "uses_max": 1,
   "duration_sec": 0,
   "while": "",
-  "effects": [
-    { "target": "health", "operation": "add", "expr": "35" }
-  ],
+  "effects": {
+    "health": {
+      "value": 35
+    }
+  },
   "start": [],
   "stop": [],
   "triggers": [],
-  "signature": "ab0d3dfaaca3ff4c9957ddc2eb37d664f91d908ca0a8a40097ba29d32dd595db"
+  "signature": "5b792b6d"
 }
 ```
 
-Подпись считается для `scenario_name: "fallout"` (см. раздел `signature` выше).
+Подпись для `scenario_name: "fallout"`.
 
 ### Пример: Ядер-Кола (порт FT3)
 
@@ -387,103 +391,133 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "uses_max": 2,
       "duration_sec": 0,
       "while": "",
-      "effects": [
-        { "target": "health", "operation": "add", "expr": "40" },
-        { "target": "radiation", "operation": "add", "expr": "100" },
-        { "target": "water", "operation": "add", "expr": "18000" }
+      "effects": {
+        "health": {
+          "value": 40
+        },
+        "radiation": {
+          "value": 100
+        },
+        "water": {
+          "value": 18000
+        }
+      },
+      "start": [
+        "nuka_cola_logic"
       ],
-      "start": ["nuka_cola_logic"],
       "stop": [],
       "triggers": [
         {
           "when": "perk_survivor == 1",
           "edge": "once",
-          "effects": [
-            { "target": "radiation", "operation": "set", "expr": "0" }
-          ],
+          "effects": {
+            "radiation": {
+              "value": 0
+            }
+          },
           "start": [],
           "stop": []
         }
       ],
-      "signature": "4e51d97ddc8e0df38ebd1c754be5b76b0bc5beeba9af76306467f25e7cce69c3"
+      "signature": "f778e666"
     },
     {
       "name": "nuka_cola_logic",
-      "description": "Addiction / refresh branches",
+      "description": "REMk EIDd CONfQTYk>0 + hangover roll",
       "kind": "instant",
       "uses": 0,
       "uses_max": 0,
       "duration_sec": 0,
       "while": "",
-      "effects": [],
+      "effects": {},
       "start": [],
       "stop": [],
       "triggers": [
         {
           "when": "nuka_addicted == 1",
           "edge": "once",
-          "effects": [
-            { "target": "nuka_crash_pending", "operation": "set", "expr": "1" }
+          "effects": {
+            "nuka_crash_pending": {
+              "value": 1
+            }
+          },
+          "start": [
+            "nuka_cola_crash_arm"
           ],
-          "start": ["nuka_cola_crash_arm"],
-          "stop": ["nuka_cola_hangover"]
+          "stop": [
+            "nuka_cola_hangover"
+          ]
         },
         {
           "when": "nuka_addicted == 0 && perk_party_king == 0 && luck < rnd(12)",
           "edge": "once",
-          "effects": [],
-          "start": ["nuka_cola_crash_arm"],
+          "effects": {},
+          "start": [
+            "nuka_cola_crash_arm"
+          ],
           "stop": []
         }
       ],
-      "signature": "172f3fa5f11d2dcb4306111ff896f0e51bc954227c6958062e17b8b9488a7ed5"
+      "signature": "e6c63028"
     },
     {
       "name": "nuka_cola_crash_arm",
-      "description": "Delay 600s before hangover",
+      "description": "AFT600 then hangover",
       "kind": "timed",
       "uses": 0,
       "uses_max": 0,
       "duration_sec": 600,
       "while": "",
-      "effects": [
-        { "target": "nuka_crash_timer", "operation": "set", "expr": "600" },
-        { "target": "nuka_crash_timer", "operation": "set_buff_rate", "expr": "-1" },
-        { "target": "nuka_crash_timer", "operation": "set_buff_duration", "expr": "600" }
-      ],
+      "effects": {
+        "nuka_crash_timer": {
+          "value": 600,
+          "buff_rate": -1,
+          "buff_duration": 600
+        }
+      },
       "start": [],
       "stop": [],
       "triggers": [
         {
           "when": "nuka_crash_timer <= 0",
           "edge": "on_rise",
-          "effects": [
-            { "target": "nuka_crash_timer", "operation": "set_buff_rate", "expr": "0" },
-            { "target": "nuka_crash_pending", "operation": "set", "expr": "0" }
+          "effects": {
+            "nuka_crash_timer": {
+              "buff_rate": 0
+            },
+            "nuka_crash_pending": {
+              "value": 0
+            }
+          },
+          "start": [
+            "nuka_cola_hangover"
           ],
-          "start": ["nuka_cola_hangover"],
           "stop": []
         }
       ],
-      "signature": "aa4d08ac7498fbe25792074cd9357c0f036bdd78cb3c1d4c1dff11f4de157981"
+      "signature": "5e9422a8"
     },
     {
       "name": "nuka_cola_hangover",
-      "description": "Strength -2 for 7200s",
+      "description": "TAR8 ADD-2 for 7200s (EID k)",
       "kind": "timed",
       "uses": 0,
       "uses_max": 0,
       "duration_sec": 7200,
       "while": "",
-      "effects": [
-        { "target": "strength", "operation": "add", "expr": "-2" },
-        { "target": "strength", "operation": "set_buff_duration", "expr": "7200" },
-        { "target": "nuka_addicted", "operation": "set", "expr": "1" }
-      ],
+      "effects": {
+        "strength": {
+          "value": -2,
+          "buff_duration": 7200
+        },
+        "nuka_addicted": {
+          "value": 1
+        }
+      },
       "start": [],
       "stop": [],
       "triggers": [],
-      "signature": "4b7847d49790e9eaabd9d29262b7c4c2e43f3c0ecaf58a09520abda703bd9e23"
+      "signature": "02c509b0"
     }
   ]
 }
@@ -524,7 +558,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "duration_left_sec": 0,
       "uses_applied": 0,
       "uses_left": 0,
-      "signature": "ad258f9f769c70013538e55b7c4945c387ce227862bc9723d1cdee5da4dcfb61"
+      "signature": "ad258f9f"
     },
     {
       "name": "armor_leather",
@@ -532,7 +566,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "duration_left_sec": 0,
       "uses_applied": 0,
       "uses_left": 0,
-      "signature": "d70914254aa7fc4d527b51431a163dce56b5faf17bc9a90c544366564e27118b"
+      "signature": "d7091425"
     },
     {
       "name": "item_speech_strength",
@@ -540,7 +574,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "duration_left_sec": 420,
       "uses_applied": 1,
       "uses_left": 4,
-      "signature": "0a449b448940750be6f43d703eb384359667dd786e4fce7acaba3fe5859839fa"
+      "signature": "0a449b44"
     },
     {
       "name": "nuka_cola_hangover",
@@ -548,7 +582,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
       "duration_left_sec": 5400,
       "uses_applied": 0,
       "uses_left": 0,
-      "signature": "02c509b05add671fb493e5bd115d686ba2ba9651d909af8b8cd02cee3ec27665"
+      "signature": "02c509b0"
     }
   ]
 }
@@ -579,7 +613,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
 | `duration_left_sec` | number                | остаток таймера присутствия; тикает только если `> 0`. У брони / passive — `0` (живёт до снятия / `stop`) |
 | `uses_applied`      | number                | сколько раз уже применили (если считаем на персонаже) |
 | `uses_left`         | number                | сколько осталось |
-| `signature`         | string                | HMAC-SHA256 hex |
+| `signature`         | string                | 8 hex (HMAC × 4 байта) |
 
 `status`:
 
@@ -594,7 +628,7 @@ TAR8 ADD-2 REP7200 AFT600 EIDk CONv28!=3&fQTYk=0&v7+v14<fRND12
 
 1. `body = { "name", "status", "uses_applied", "uses_left" }` — канонический JSON
 2. `payload = instance_id + "|" + scenario_name + "|" + canonical_json(body)`
-3. `signature = HMAC-SHA256(payload, instance_key)` в hex
+3. `signature = HMAC-SHA256(payload, instance_key)` → 4 байта hex (8 символов)
 
 Полный пример: `character_instance.example.json`.
 

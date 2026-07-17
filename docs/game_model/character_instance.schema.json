@@ -90,8 +90,8 @@
         },
         "signature": {
           "type": "string",
-          "pattern": "^[a-f0-9]{64}$",
-          "description": "HMAC-SHA256 over name, status, uses_applied, uses_left"
+          "pattern": "^[a-f0-9]{8}$",
+          "description": "HMAC-SHA256 truncated to 4 bytes (8 hex) over name, status, uses_applied, uses_left"
         }
       }
     }

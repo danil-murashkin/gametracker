@@ -37,8 +37,8 @@
     },
     "signature": {
       "type": "string",
-      "pattern": "^[a-f0-9]{64}$",
-      "description": "HMAC-SHA256 hex (64 chars). UID for signing is taken from the NFC chip"
+      "pattern": "^[a-f0-9]{8}$",
+      "description": "HMAC-SHA256 truncated to 4 bytes as 8 hex chars. UID for signing is taken from the NFC chip"
     }
   }
 }
