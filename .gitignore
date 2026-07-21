@@ -1,2 +1,4 @@
 .tools/
 examples/generated/
+node_modules/
+dist/
