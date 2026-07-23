@@ -1,6 +1,6 @@
 # Gametracker Engine Simulator
 
-Браузерный симулятор игровой механики по спецификации [`docs/game_model/game_engine.md`](../docs/game_model/game_engine.md).
+Браузерный симулятор игровой механики по спецификации [`docs/game_data_format.md`](../docs/game_data_format.md).
 
 Реализовано:
 
