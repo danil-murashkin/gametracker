@@ -1,8 +1,0 @@
-{
-  "$schema": "./recipe_instance.schema.json",
-  "scenario_name": "fallout",
-  "name": "armor_leather",
-  "uses_applied": 0,
-  "uses_left": 0,
-  "signature": "80ca8366"
-}

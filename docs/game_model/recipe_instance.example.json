@@ -1,8 +1,0 @@
-{
-  "$schema": "./recipe_instance.schema.json",
-  "scenario_name": "ft3",
-  "name": "nuka_cola",
-  "uses_applied": 1,
-  "uses_left": 1,
-  "signature": "fdc1ba16"
-}
