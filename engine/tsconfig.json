@@ -12,7 +12,7 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@docs/*": ["../docs/game_model/*"]
+      "@examples/*": ["../examples/*"]
     }
   },
   "include": ["src"]

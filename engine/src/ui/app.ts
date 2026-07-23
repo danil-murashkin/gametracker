@@ -1,9 +1,9 @@
 import { GameEngine } from '../core/engine.js';
-import type { CharacterInstance, CharacterModel, Snapshot } from '../types.js';
+import type { Character, RecipeCatalog, Snapshot } from '../types.js';
 
 export interface SimulatorAppOptions {
-  model: CharacterModel;
-  initialInstance?: CharacterInstance;
+  character: Character;
+  catalog: RecipeCatalog;
 }
 
 export function mountSimulator(
@@ -11,13 +11,9 @@ export function mountSimulator(
   options: SimulatorAppOptions,
 ): { engine: GameEngine; destroy: () => void } {
   const engine = new GameEngine();
-  engine.loadModel(options.model);
-
-  if (options.initialInstance) {
-    engine.loadInstance(options.initialInstance);
-  } else {
-    engine.createFromModel();
-  }
+  engine.loadCatalog(options.catalog);
+  engine.loadCharacter(options.character);
+  engine.applyWorldMechanics();
 
   let autoTimer: number | null = null;
   let snapshot = engine.getSnapshot();
@@ -30,8 +26,8 @@ export function mountSimulator(
           <p class="subtitle">Сценарий: <strong id="scenario-name"></strong> · тик: <strong id="tick-count">0</strong></p>
         </div>
         <div class="header-actions">
-          <button type="button" id="btn-reset-model" class="btn secondary">Сброс из модели</button>
-          <button type="button" id="btn-load-example" class="btn secondary">Пример instance</button>
+          <button type="button" id="btn-reset-defs" class="btn secondary">Сброс (def)</button>
+          <button type="button" id="btn-load-character" class="btn secondary">Загрузить character</button>
         </div>
       </header>
 
@@ -39,7 +35,7 @@ export function mountSimulator(
         <button type="button" id="btn-tick" class="btn primary">+1 сек (тик)</button>
         <button type="button" id="btn-auto" class="btn">Авто 1 Гц</button>
         <label class="apply-group">
-          <span>Рецепт</span>
+          <span>Каталог</span>
           <select id="recipe-select"></select>
           <button type="button" id="btn-apply" class="btn">Применить</button>
           <button type="button" id="btn-remove" class="btn secondary">Снять</button>
@@ -54,10 +50,7 @@ export function mountSimulator(
               <thead>
                 <tr>
                   <th>name</th>
-                  <th>value</th>
-                  <th>buff_rate</th>
-                  <th>buff_duration</th>
-                  <th>buff_coef</th>
+                  <th>val</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -66,15 +59,32 @@ export function mountSimulator(
         </section>
 
         <section class="panel">
-          <h2>Активные рецепты</h2>
+          <h2>Инвентарь</h2>
           <div class="table-wrap">
-            <table id="recipes-table">
+            <table id="inventory-table">
               <thead>
                 <tr>
                   <th>name</th>
-                  <th>status</th>
-                  <th>duration_left</th>
-                  <th>uses_left</th>
+                  <th>remaining</th>
+                  <th>applied</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Активные эффекты</h2>
+          <div class="table-wrap">
+            <table id="effects-table">
+              <thead>
+                <tr>
+                  <th>id</th>
+                  <th>stat</th>
+                  <th>val</th>
+                  <th>delay</th>
+                  <th>try</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -93,17 +103,18 @@ export function mountSimulator(
   const scenarioName = root.querySelector<HTMLElement>('#scenario-name')!;
   const tickCount = root.querySelector<HTMLElement>('#tick-count')!;
   const statsBody = root.querySelector<HTMLTableSectionElement>('#stats-table tbody')!;
-  const recipesBody = root.querySelector<HTMLTableSectionElement>('#recipes-table tbody')!;
+  const inventoryBody = root.querySelector<HTMLTableSectionElement>('#inventory-table tbody')!;
+  const effectsBody = root.querySelector<HTMLTableSectionElement>('#effects-table tbody')!;
   const logList = root.querySelector<HTMLOListElement>('#log-list')!;
   const recipeSelect = root.querySelector<HTMLSelectElement>('#recipe-select')!;
 
   function renderRecipesSelect(): void {
     recipeSelect.innerHTML = engine
-      .getModelRecipes()
-      .filter((recipe) => recipe.kind !== 'none')
+      .getCatalogRecipes()
+      .filter((recipe) => recipe.type !== 'none')
       .map(
         (recipe) =>
-          `<option value="${recipe.name}">${recipe.title ?? recipe.name} (${recipe.kind})</option>`,
+          `<option value="${recipe.name}">${recipe.name} (${recipe.type})${recipe.desc ? ' — ' + escapeHtml(recipe.desc) : ''}</option>`,
       )
       .join('');
   }
@@ -117,29 +128,41 @@ export function mountSimulator(
         (stat) => `
           <tr>
             <td>${stat.name}</td>
-            <td>${formatNumber(stat.value)}</td>
-            <td>${formatNumber(stat.buff_rate)}</td>
-            <td>${stat.buff_duration}</td>
-            <td>${formatNumber(stat.buff_coefficient)}</td>
+            <td>${formatNumber(stat.val)}</td>
           </tr>
         `,
       )
       .join('');
 
-    recipesBody.innerHTML = data.recipes.length
-      ? data.recipes
+    inventoryBody.innerHTML = data.inventory.length
+      ? data.inventory
           .map(
-            (recipe) => `
+            (item) => `
               <tr>
-                <td>${recipe.name}</td>
-                <td>${recipe.status}</td>
-                <td>${recipe.duration_left_sec}</td>
-                <td>${recipe.uses_left}</td>
+                <td>${item.name}</td>
+                <td>${item.remaining}</td>
+                <td>${item.applied}</td>
               </tr>
             `,
           )
           .join('')
-      : '<tr><td colspan="4" class="empty">нет активных рецептов</td></tr>';
+      : '<tr><td colspan="3" class="empty">пусто</td></tr>';
+
+    effectsBody.innerHTML = data.effects.length
+      ? data.effects
+          .map(
+            (effect) => `
+              <tr>
+                <td>${effect.id}</td>
+                <td>${effect.stat}</td>
+                <td>${escapeHtml(effect.val)}</td>
+                <td>${effect.delay_left}</td>
+                <td>${effect.try_left}</td>
+              </tr>
+            `,
+          )
+          .join('')
+      : '<tr><td colspan="5" class="empty">нет активных эффектов</td></tr>';
 
     logList.innerHTML = engine
       .getLogs()
@@ -195,18 +218,16 @@ export function mountSimulator(
     refresh();
   };
 
-  const onResetModel = () => {
+  const onResetDefs = () => {
     stopAuto();
     engine.createFromModel();
     refresh();
   };
 
-  const onLoadExample = () => {
-    if (!options.initialInstance) {
-      return;
-    }
+  const onLoadCharacter = () => {
     stopAuto();
-    engine.loadInstance(options.initialInstance);
+    engine.loadCharacter(structuredClone(options.character));
+    engine.applyWorldMechanics();
     refresh();
   };
 
@@ -214,8 +235,8 @@ export function mountSimulator(
   root.querySelector('#btn-auto')!.addEventListener('click', onAuto);
   root.querySelector('#btn-apply')!.addEventListener('click', onApply);
   root.querySelector('#btn-remove')!.addEventListener('click', onRemove);
-  root.querySelector('#btn-reset-model')!.addEventListener('click', onResetModel);
-  root.querySelector('#btn-load-example')!.addEventListener('click', onLoadExample);
+  root.querySelector('#btn-reset-defs')!.addEventListener('click', onResetDefs);
+  root.querySelector('#btn-load-character')!.addEventListener('click', onLoadCharacter);
 
   return {
     engine,

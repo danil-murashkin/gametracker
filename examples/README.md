@@ -1,6 +1,22 @@
-# Примеры проектов GameTracker Editor
+# Примеры GameTracker
 
-Исходники картинок для примеров — в [`assets/`](assets/) (Vault Boy JPG/PNG для GameTracker Demo).
+| Каталог / файл | Назначение |
+|----------------|------------|
+| [`fallout_demo/`](fallout_demo/) | `character.json` + каталог рецептов для [`engine/`](../engine/) |
+| [`assets/`](assets/) | Картинки Vault Boy для LVGL Demo |
+| [`GameTracker Demo.lvgl.json`](GameTracker%20Demo.lvgl.json) / `gametracker-demo.lvgl.json` | Проект редактора (Import) |
+
+## Fallout Demo (engine)
+
+```bash
+cd engine
+npm install
+npm run dev
+```
+
+Подробнее: [fallout_demo/README.md](fallout_demo/README.md).
+
+---
 
 ## Logic Timer Counter (минимальный тест логики)
 

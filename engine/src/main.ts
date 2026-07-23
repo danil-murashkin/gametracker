@@ -1,6 +1,6 @@
-import model from '@docs/character_model.example.json';
-import instance from '@docs/character_instance.example.json';
-import type { CharacterInstance, CharacterModel } from './types.js';
+import character from '@examples/fallout_demo/character.json';
+import catalog from '@examples/fallout_demo/recipes.json';
+import type { Character, RecipeCatalog } from './types.js';
 import { mountSimulator } from './ui/app.js';
 import './ui/styles.css';
 
@@ -10,6 +10,6 @@ if (!appRoot) {
 }
 
 mountSimulator(appRoot, {
-  model: model as unknown as CharacterModel,
-  initialInstance: instance as unknown as CharacterInstance,
+  character: character as unknown as Character,
+  catalog: catalog as unknown as RecipeCatalog,
 });

@@ -22,7 +22,7 @@ import type { CodeGenOptions } from '../src/codegen/types';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..', '..');
 const demoPath = join(repoRoot, 'examples', 'GameTracker Demo.lvgl.json');
-const lvglTargetPath = join(repoRoot, 'lvgl-target.json');
+const lvglTargetPath = join(repoRoot, 'common', 'lvgl-target.json');
 const assetsDir = join(repoRoot, 'examples', 'assets');
 const exportDir = join(repoRoot, 'common', 'ui_generated');
 

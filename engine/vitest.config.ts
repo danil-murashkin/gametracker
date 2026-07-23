@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      '@docs': path.resolve(__dirname, '../docs/game_model'),
+      '@examples': path.resolve(__dirname, '../examples'),
     },
   },
   test: {

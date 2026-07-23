@@ -3,6 +3,8 @@
 Платформо-независимый код, который линкуется в **firmware** (ESP32).  
 Список исходников — в [`common_sources.cmake`](common_sources.cmake).
 
+Целевая версия LVGL (IDF / editor WASM / codegen) — [`lvgl-target.json`](lvgl-target.json).
+
 Симуляция UI и логики — во вкладке **Simulator** в [`../editor/`](../editor/) (WASM в браузере, тот же сгенерированный C).
 
 ## Сейчас (счётчик)

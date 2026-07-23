@@ -2,13 +2,15 @@
 
 Браузерный симулятор игровой механики по спецификации [`docs/game_data_format.md`](../docs/game_data_format.md).
 
+Данные сценария **не вшиты в движок** — берутся из [`examples/fallout_demo/`](../examples/fallout_demo/) (препараты по [`docs/old_system/preparates.md`](../docs/old_system/preparates.md)).
+
 Реализовано:
 
-- тик движка (1 сек): `value += buff_rate * buff_coefficient`, clamp, таймеры статов;
-- применение и снятие рецептов (`instant`, `timed`, `passive`);
-- условия `while` у пассивных рецептов (например, урон от голода);
-- триггеры (`on_rise`, `on_fall`, `while_true`, `once`);
-- загрузка примера `character_model.example.json` и `character_instance.example.json`.
+- тик 1 сек: сброс `mod_*` / `*_resist` к `def`, затем эффекты (`delay` / `tick` / `try` / `while`);
+- применение рецептов (`none` / `inst` / `temp` / `pasv`) с `val` (`+` / `-` / `=`), `if` / `while`;
+- выражения: `exs` / `act` / `inact`, `rnd`, `and` / `or` / `not`, имена статов;
+- динамические статы (зависимости вроде `hangover_nuka`);
+- загрузка `character.json` и `recipes.json` из examples.
 
 ## Запуск
 
@@ -32,15 +34,18 @@ npm run test
 ```text
 engine/
   src/
-    core/          # логика движка (без UI)
+    core/          # логика движка (без UI и без данных сценария)
     ui/            # браузерный интерфейс
-    main.ts        # точка входа
+    main.ts        # точка входа → examples/fallout_demo
+examples/fallout_demo/
+  character.json          # статы + инвентарь
+  recipes.json            # каталог рецептов
 ```
 
 ## UI
 
 - **+1 сек (тик)** — один шаг симуляции;
 - **Авто 1 Гц** — тик каждую секунду;
-- **Применить / Снять** — рецепт из сценария;
-- **Сброс из модели** — новый персонаж из `character_model`;
-- **Пример instance** — состояние из `character_instance.example.json`.
+- **Применить / Снять** — рецепт из **каталога** (при применении попадает в инвентарь);
+- **Сброс (def)** — val = def, пустой инвентарь + мировая механика;
+- **Загрузить character** — состояние из `character.json`.

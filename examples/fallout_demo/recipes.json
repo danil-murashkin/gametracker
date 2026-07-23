@@ -1,0 +1,282 @@
+{
+  "scenario_name": "fallout_demo",
+  "recipes": [
+    {
+      "name": "mech_metabolism",
+      "desc": "Расход еды и воды каждый тик",
+      "type": "pasv",
+      "stats": [
+        {"stat":"food","val":"-(food_per_cyc)","tick":1,"try":-1,"while":"inact(is_dead)"},
+        {"stat":"water","val":"-(water_per_cyc)","tick":1,"try":-1,"while":"inact(is_dead)"}
+      ]
+    },
+    {
+      "name": "mech_starvation",
+      "desc": "Урон от голода при food<=0",
+      "type": "pasv",
+      "stats": [
+        {"stat":"health","val":"-1","tick":1,"try":-1,"while":"food <= 0 and inact(is_dead)"}
+      ]
+    },
+    {
+      "name": "mech_dehydration",
+      "desc": "Урон от жажды при water<=0",
+      "type": "pasv",
+      "stats": [
+        {"stat":"health","val":"-1","tick":1,"try":-1,"while":"water <= 0 and inact(is_dead)"}
+      ]
+    },
+    {
+      "name": "stimpak",
+      "desc": "Восстанавливает 50% max_health",
+      "type": "inst", "uses": 3, "umax": 3,
+      "sig": "5b792b6d",
+      "stat": "health",
+      "val": "+(max_health/2)"
+    },
+    {
+      "name": "radaway",
+      "desc": "Выводит 500 ед. радиации",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stat": "rad_dose",
+      "val": "-500"
+    },
+    {
+      "name": "addictol",
+      "desc": "Снимает все зависимости",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"hangover_nuka","val":"=0"},
+        {"stat":"addict_buffout","val":"=0"},
+        {"stat":"addict_jet","val":"=0"},
+        {"stat":"addict_medx","val":"=0"},
+        {"stat":"addict_mentats","val":"=0"},
+        {"stat":"addict_radx","val":"=0"},
+        {"stat":"addict_quantum","val":"=0"}
+      ]
+    },
+    {
+      "name": "nuka_cola",
+      "desc": "Зарядись энергией атома!",
+      "type": "inst", "uses": 2, "umax": 2,
+      "sig": "a3f19c4e",
+      "stats": [
+        {"stat":"health","val":"+40"},
+        {"stat":"rad_now","val":"+100"},
+        {"stat":"water","val":"+18000"},
+        {"stat":"hangover_nuka","val":"=1","if":"(exs(hangover_nuka)) or (inact(party_king) and (luck + mod_luck < rnd(12)))"},
+        {"stat":"mod_strength","val":"-2","delay":600,"tick":1,"try":7200,"while":"act(hangover_nuka)"}
+      ]
+    },
+    {
+      "name": "nuka_cola_quantum",
+      "desc": "Зарядись энергией атома! (квантовая)",
+      "type": "inst", "uses": 2, "umax": 2,
+      "stats": [
+        {"stat":"health","val":"+100"},
+        {"stat":"rad_now","val":"+100"},
+        {"stat":"water","val":"+36000"},
+        {"stat":"addict_quantum","val":"=1","if":"(exs(addict_quantum)) or (inact(party_king) and (luck + mod_luck < rnd(12)))"},
+        {"stat":"mod_strength","val":"-2","delay":600,"tick":1,"try":7200,"while":"act(addict_quantum)"}
+      ]
+    },
+    {
+      "name": "buffout",
+      "desc": "Сила и Выносливость +2 на 5 минут",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"mod_strength","val":"+2","tick":1,"try":300},
+        {"stat":"mod_endurance","val":"+2","tick":1,"try":300},
+        {"stat":"addict_buffout","val":"=1","if":"(exs(addict_buffout)) or (inact(party_king) and (luck + mod_luck < rnd(17)))"},
+        {"stat":"mod_strength","val":"-1","delay":900,"tick":1,"try":7200,"while":"act(addict_buffout)"},
+        {"stat":"mod_endurance","val":"-1","delay":900,"tick":1,"try":7200,"while":"act(addict_buffout)"}
+      ]
+    },
+    {
+      "name": "jet",
+      "desc": "Ловкость +3 на 15 минут. От винта!",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"mod_agility","val":"+3","tick":1,"try":900},
+        {"stat":"addict_jet","val":"=1","if":"(exs(addict_jet)) or inact(party_king)"},
+        {"stat":"mod_agility","val":"-1","delay":1800,"tick":1,"try":7200,"while":"act(addict_jet)"},
+        {"stat":"mod_intellect","val":"-2","delay":1800,"tick":1,"try":7200,"while":"act(addict_jet)"}
+      ]
+    },
+    {
+      "name": "super_jet",
+      "desc": "Ловкость +3 на 15 минут. От винта! (×5)",
+      "type": "inst", "uses": 5, "umax": 5,
+      "stats": [
+        {"stat":"mod_agility","val":"+3","tick":1,"try":900},
+        {"stat":"addict_jet","val":"=1","if":"(exs(addict_jet)) or inact(party_king)"},
+        {"stat":"mod_agility","val":"-1","delay":1800,"tick":1,"try":7200,"while":"act(addict_jet)"},
+        {"stat":"mod_intellect","val":"-2","delay":1800,"tick":1,"try":7200,"while":"act(addict_jet)"}
+      ]
+    },
+    {
+      "name": "med_x",
+      "desc": "Сопротивление урону +25 на 3 минуты",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"chem_resist","val":"+25","tick":1,"try":180},
+        {"stat":"phys_resist","val":"+25","tick":1,"try":180},
+        {"stat":"addict_medx","val":"=1","if":"(exs(addict_medx)) or (inact(party_king) and (luck + mod_luck < rnd(10)))"},
+        {"stat":"chem_resist","val":"-10","delay":600,"tick":1,"try":7200,"while":"act(addict_medx)"},
+        {"stat":"mod_perception","val":"-1","delay":600,"tick":1,"try":7200,"while":"act(addict_medx)"}
+      ]
+    },
+    {
+      "name": "mentats",
+      "desc": "Интеллект и Восприятие +2 на 5 минут",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"mod_intellect","val":"+2","tick":1,"try":300},
+        {"stat":"mod_perception","val":"+2","tick":1,"try":300},
+        {"stat":"addict_mentats","val":"=1","if":"(exs(addict_mentats)) or (inact(party_king) and (luck + mod_luck < rnd(15)))"},
+        {"stat":"mod_intellect","val":"-2","delay":900,"tick":1,"try":7200,"while":"act(addict_mentats)"}
+      ]
+    },
+    {
+      "name": "rad_x",
+      "desc": "Сопротивление радиации +50 на 15 минут",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"rad_resist","val":"+50","tick":1,"try":900},
+        {"stat":"addict_radx","val":"=1","if":"(exs(addict_radx)) or (inact(party_king) and (luck + mod_luck < rnd(20)))"},
+        {"stat":"mod_strength","val":"-1","delay":1800,"tick":1,"try":7200,"while":"act(addict_radx)"},
+        {"stat":"mod_endurance","val":"-1","delay":1800,"tick":1,"try":7200,"while":"act(addict_radx)"}
+      ]
+    },
+    {
+      "name": "water_dirty",
+      "desc": "Вроде можно пить...",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stats": [
+        {"stat":"health","val":"+20"},
+        {"stat":"rad_now","val":"+250"},
+        {"stat":"water","val":"+36000"}
+      ]
+    },
+    {
+      "name": "water_pure",
+      "desc": "Свеженькая водичка",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stats": [
+        {"stat":"health","val":"+20"},
+        {"stat":"water","val":"+36000"}
+      ]
+    },
+    {
+      "name": "food_fancy_lads",
+      "desc": "Сладкое веселье",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"health","val":"+10"},
+        {"stat":"rad_now","val":"+450"},
+        {"stat":"food","val":"+10800"},
+        {"stat":"water","val":"-9000"}
+      ]
+    },
+    {
+      "name": "food_apple_pie",
+      "desc": "Качественная еда",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stat": "food",
+      "val": "+43200"
+    },
+    {
+      "name": "food_brahmin_steak",
+      "desc": "Сочная говядина",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"food","val":"+64800"},
+        {"stat":"rad_resist","val":"+99","tick":1,"try":14400}
+      ]
+    },
+    {
+      "name": "super_buzz",
+      "desc": "Вот это ягодка!",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"health","val":"+35"},
+        {"stat":"rad_now","val":"+50"},
+        {"stat":"food","val":"+10800"},
+        {"stat":"water","val":"+36000"}
+      ]
+    },
+    {
+      "name": "catseye",
+      "desc": "Восприятие +3 на 1 час",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stat": "mod_perception",
+      "val": "+3",
+      "tick": 1,
+      "try": 3600
+    },
+    {
+      "name": "rat_poison",
+      "desc": "Каждые 5 с −1 HP, 1800 раз",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stat": "health",
+      "val": "-1",
+      "tick": 5,
+      "try": 1800
+    },
+    {
+      "name": "milk",
+      "desc": "Снимает 100 радиации, вода +9000",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"rad_dose","val":"-100"},
+        {"stat":"water","val":"+9000"}
+      ]
+    },
+    {
+      "name": "bobblehead_strength",
+      "desc": "Сила +1 навсегда",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stat": "strength",
+      "val": "+1"
+    },
+    {
+      "name": "bobblehead_luck",
+      "desc": "Удача +1 навсегда",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stat": "luck",
+      "val": "+1"
+    },
+    {
+      "name": "magazine_grognak",
+      "desc": "Сила +2 на 3 часа",
+      "type": "inst", "uses": 2, "umax": 2,
+      "stat": "mod_strength",
+      "val": "+2",
+      "tick": 1,
+      "try": 10800
+    },
+    {
+      "name": "armor_light_phys",
+      "desc": "Лёгкая броня: физ резист 4",
+      "type": "pasv", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"armor_rad","val":"=0"},
+        {"stat":"armor_phys","val":"=4"},
+        {"stat":"armor_chem","val":"=0"},
+        {"stat":"max_armor","val":"=250"},
+        {"stat":"armor_state","val":"=250"}
+      ]
+    },
+    {
+      "name": "armor_leather",
+      "desc": "Кожаная броня + бафф силы",
+      "type": "pasv", "uses": 1, "umax": 1,
+      "sig": "ed04038f",
+      "stats": [
+        {"stat":"phys_resist","val":"=40","tick":1,"try":-1},
+        {"stat":"armor_phys","val":"=2"},
+        {"stat":"mod_strength","val":"+1","tick":1,"try":300}
+      ]
+    }
+  ]
+}

@@ -1,82 +1,99 @@
-export type StatKind = 'none' | 'instant' | 'timed' | 'passive';
-export type RecipeKind = StatKind;
-export type RecipeStatus = 'active' | 'pending';
-export type TriggerEdge = 'on_rise' | 'on_fall' | 'while_true' | 'once';
-
-export type StatParam = 'value' | 'buff_rate' | 'buff_duration' | 'buff_coefficient';
+export type RecipeType = 'none' | 'inst' | 'temp' | 'pasv';
 
 export interface StatDef {
+  id?: number;
   name: string;
-  description?: string;
-  title?: string;
-  kind: StatKind;
+  desc?: string;
+  /** Текущее значение (в character.json). */
+  val?: number;
   min: number;
   max: number;
-  default: number;
-  buff_rate: number;
-  buff_duration: number;
-  buff_coefficient: number;
+  def: number;
 }
 
-export interface StatEffects {
-  value?: number;
-  buff_rate?: number;
-  buff_duration?: number;
-  buff_coefficient?: number;
-}
-
-export interface TriggerDef {
-  when: string;
-  edge: TriggerEdge;
-  effects: Record<string, StatEffects>;
-  start: string[];
-  stop: string[];
+export interface EffectDef {
+  stat: string;
+  val: string;
+  delay?: number;
+  coef?: number;
+  tick?: number;
+  /** Число срабатываний; -1 или отсутствие при tick — пока жив эффект / while. */
+  try?: number;
+  if?: string;
+  while?: string;
 }
 
 export interface RecipeDef {
+  id?: number;
   name: string;
-  description?: string;
-  title?: string;
-  kind: RecipeKind;
-  uses: number;
-  uses_max: number;
-  duration_sec: number;
-  while: string;
-  effects: Record<string, StatEffects>;
-  start: string[];
-  stop: string[];
-  triggers: TriggerDef[];
-  signature?: string;
+  desc?: string;
+  type: RecipeType;
+  uses?: number;
+  umax?: number;
+  sig?: string;
+  /** Короткая форма: один стат. */
+  stat?: string;
+  val?: string;
+  delay?: number;
+  coef?: number;
+  tick?: number;
+  try?: number;
+  if?: string;
+  while?: string;
+  /** Несколько воздействий. */
+  stats?: EffectDef[];
 }
 
-export interface CharacterModel {
+/** Каталог рецептов сценария (не инвентарь персонажа). */
+export interface RecipeCatalog {
   scenario_name: string;
-  stats: StatDef[];
   recipes: RecipeDef[];
 }
 
 export interface StatInstance {
   name: string;
-  value: number;
-  buff_rate: number;
-  buff_duration: number;
-  buff_coefficient: number;
+  val: number;
 }
 
-export interface RecipeInstance {
+export interface InventoryItem {
   name: string;
-  status: RecipeStatus;
-  duration_left_sec: number;
-  uses_applied: number;
-  uses_left: number;
-  signature?: string;
+  /** Остаток / наличие использований. */
+  remaining: number;
+  /** Сколько раз уже применено. */
+  applied: number;
 }
+
+export interface ActiveEffect {
+  id: string;
+  recipe: string;
+  index: number;
+  stat: string;
+  val: string;
+  delay_left: number;
+  tick: number;
+  tick_acc: number;
+  try_left: number;
+  coef: number;
+  while?: string;
+}
+
+/** Персонаж: статы (схема + val) и инвентарь в одном документе. */
+export interface Character {
+  scenario_name: string;
+  instance_id?: string;
+  stats: StatDef[];
+  inventory: InventoryItem[];
+  effects?: ActiveEffect[];
+}
+
+export type CharacterModel = Pick<Character, 'scenario_name' | 'stats'>;
 
 export interface CharacterInstance {
   scenario_name: string;
   instance_id?: string;
   stats: StatInstance[];
-  recipes: RecipeInstance[];
+  inventory: InventoryItem[];
+  effects?: ActiveEffect[];
 }
 
 export interface EngineLogEntry {
@@ -94,5 +111,6 @@ export interface Snapshot {
   tick: number;
   scenario_name: string;
   stats: StatInstance[];
-  recipes: RecipeInstance[];
+  inventory: InventoryItem[];
+  effects: ActiveEffect[];
 }

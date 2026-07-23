@@ -27,8 +27,8 @@
 | Компонент | Путь | Роль |
 |-----------|------|------|
 | **Редактор** | [`editor/`](editor/) | **GameTracker Editor** (форк [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor)): LVGL UI, события, логика, экспорт C, **Simulator** (WASM в браузере) |
-| **Движок (симулятор)** | [`engine/`](engine/) | Браузерный симулятор игровой механики: статы, рецепты, тики, триггеры — по [`docs/game_data_format.md`](docs/game_data_format.md) |
-| **Примеры** | [`examples/`](examples/) | Готовые `.lvgl.json` для Import (Demo Vault Boy) |
+| **Движок (симулятор)** | [`engine/`](engine/) | Браузерный симулятор механики по [`docs/game_data_format.md`](docs/game_data_format.md); данные — [`examples/fallout_demo/`](examples/fallout_demo/) |
+| **Примеры** | [`examples/`](examples/) | LVGL Demo + [`fallout_demo/`](examples/fallout_demo/) (статы/рецепты для engine) |
 | **Общий код** | [`common/`](common/) | UI (LVGL), приложение, HAL — для прошивки ESP32 |
 | **Прошивка** | [`firmware/`](firmware/) | ESP32, дисплей ST7789, кнопки, радио (позже) |
 
@@ -96,7 +96,7 @@
 | Тема | Файл |
 |------|------|
 | Редактор (IoTSharp) | [editor/README.md](editor/README.md) |
-| Формат игровых данных + симулятор | [docs/game_data_format.md](docs/game_data_format.md), [engine/README.md](engine/README.md) |
+| Формат игровых данных + симулятор | [docs/game_data_format.md](docs/game_data_format.md), [engine/README.md](engine/README.md), [examples/fallout_demo/](examples/fallout_demo/) |
 | Пример Demo | [examples/README.md](examples/README.md) |
 | Общий код | [common/README.md](common/README.md) |
 | Дисплей / bring-up | [firmware/docs/display_bringup.md](firmware/docs/display_bringup.md) |
