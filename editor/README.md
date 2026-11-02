@@ -1,13 +1,10 @@
 # GameTracker Editor
 
-`editor/` — встроенный **визуальный редактор** LVGL-интерфейсов: браузер, без тяжёлых IDE, **open source** (MIT).
-
-Основа — [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor). Исходники форка лежат **в этом каталоге**, с **английским интерфейсом** и примерами проектов.
+`editor/` — встроенный **визуальный редактор** LVGL-интерфейсов: браузер, без тяжёлых IDE, основано на **open source** (MIT) [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor). Исходники форка лежат **в этом каталоге**, с **английским интерфейсом** и примерами проектов.
 
 Интеграция с прошивкой и симулятором репозитория — в [корневом README](../README.md).
 
 ## Вкладки
-
 
 | Вкладка     | Назначение                                                    |
 | ----------- | ------------------------------------------------------------- |
@@ -16,20 +13,17 @@
 | **Code**    | Просмотр и скачивание сгенерированных `.c` / `.h`             |
 | **Preview** | Быстрый Canvas 2D-превью + **Simulator** (компиляция сгенерированного C-кода, как на ESP32) |
 
-
 На **Design** у компонентов настраиваются свойства и вкладка **Events** (обработчики на конкретном виджете). На **Logic** — графы из нод: триггеры, ветвления, чтение переменных, show/hide и т.д.
 
 ## Экспорт кода
 
 Вкладка **Code** — скачать отдельные файлы или ZIP.
 
-
 | Файл                          | Содержимое                         |
 | ----------------------------- | ---------------------------------- |
 | `ui.c` / `ui.h`               | Инициализация LVGL, виджеты, стили |
 | `ui_events.c` / `ui_events.h` | Обработчики событий UI (Events)    |
 | `ui_logic.c` / `ui_logic.h`   | Логика из Logic Editor             |
-
 
 ## Logic Editor
 
@@ -52,7 +46,6 @@
 4. **Ctrl+click** на ноде — breakpoint
 
 Debug исполняет те же правила, что Preview и codegen (C block, Write variable, If/Else ветки).
-
 
 - **User variables** — свои `int` / `float` / `string` / `bool` (панель **Variables** справа).
 - **Hardware (ESP32)** — встроенные только для чтения:
@@ -103,7 +96,7 @@ Debug исполняет те же правила, что Preview и codegen (C 
 editor/
 ├── src/                   # React + codegen
 ├── docs/                  # компоненты LVGL, шрифты
-├── scripts/               # apply-en-ui.mjs, build-gametracker-demo.mjs
+├── scripts/               # apply-en-ui.mjs, build-fallout-demo.mjs
 ├── gametracker-editor-start.ps1  # запуск dev-сервера
 ├── package.json
 └── FORK.md                # отличия от upstream
@@ -126,7 +119,6 @@ cd editor
 
 Рекомендуемые настройки под дисплей трекера **240×320, RGB565**:
 
-
 | Параметр     | Значение                         |
 | ------------ | -------------------------------- |
 | Resolution   | **240×320 (QVGA)**               |
@@ -134,13 +126,11 @@ cd editor
 | Default font | `montserrat_14`                  |
 | Memory size  | **48 KB** (можно 32–64 для Demo) |
 
-
 Картинки в **Resources** — формат **RGB565** (C-массив), без тяжёлого PNG/JPEG на устройстве.
 
 ## Пример Demo
 
 Готовый проект: [../examples/gametracker-demo.lvgl.json](../examples/gametracker-demo.lvgl.json)
-
 
 | Имя виджета  | Тип          | Роль в Demo                          |
 | ------------ | ------------ | ------------------------------------ |
@@ -154,7 +144,7 @@ cd editor
 
 **Import project** на стартовом экране → выбрать файл из `examples/`.
 
-Подробнее: [../examples/README.md](../examples/README.md).
+Подробнее: [../examples/fallout_demo/README.md](../examples/fallout_demo/README.md).
 
 ## Разработка и тесты
 

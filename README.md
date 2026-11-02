@@ -8,7 +8,7 @@
 
 ## Идея
 
-**GameTracker** — личный терминал игрока для взаимодействия с игрой. На полигоне все устройства работают в **сети LoRa**. **Организаторы** управляют игрой через **локальный сервер**. Трекер связан с **сервером** и взаимодействует с **объектами игры** через **NFC-метки** (предметы), **Wi-Fi** или **Bluetooth** (зоны, сценарное оборудование). Через **Wi-Fi** или **Bluetooth** можно настроить **трекер**, в том числе с **смартфона**. Трекер определяет местоположение (**GNSS**) и ориентацию (**компас**, **акселерометр**, **гироскоп**).
+**GameTracker** — личный терминал игрока для взаимодействия с игрой. На полигоне устройства образуют **mesh-сеть LoRa**: трекер **передаёт мастеру координаты** (GNSS) и краткий статус, мастер шлёт **персональные** и **групповые** команды. Полезная нагрузка **шифруется end-to-end** — ретрансляторы пересылают кадр, но не читают содержимое; пакет понимают только мастер и адресат (устройство или члены группы). **Организаторы** управляют игрой через **локальный сервер**. Локально трекер взаимодействует с **объектами игры** через **NFC-метки** (предметы), **Wi-Fi** или **Bluetooth** (зоны, сценарное оборудование). Через **Wi-Fi** или **Bluetooth** можно настроить **трекер**, в том числе с **смартфона**. Трекер определяет местоположение (**GNSS**) и ориентацию (**компас**, **акселерометр**, **гироскоп**).
 
 Информация выводится на **цветной дисплей** 240×320. Есть **вибромотор** и **динамик**. **Интерфейс и логика экрана** собираются в **встроенном визуальном редакторе** в браузере — без программирования на C, с **симуляцией** на ПК и прошивкой на ESP32.
 
@@ -16,21 +16,21 @@
 
 ```
   Design time (ПК, браузер)              Runtime (ESP32)
- ┌──────────────────────────┐          ┌─────────────────────┐
+ ┌──────────────────────-────┐          ┌─────────────────────┐
  │  editor/ — IoTSharp fork  │  .c/.h   │  common/            │
  │  Design, Logic, Code,     │ ───────► │  ui/ + app + HAL    │
  │  Preview, Simulator (WASM)│          └──────────┬──────────┘
- └──────────────────────────┘                     ▼
-                                              firmware/
+ └────────────────────────-──┘                     ▼
+                                               firmware/
 ```
 
-| Компонент | Путь | Роль |
-|-----------|------|------|
-| **Редактор** | [`editor/`](editor/) | **GameTracker Editor** (форк [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor)): LVGL UI, события, логика, экспорт C, **Simulator** (WASM в браузере) |
-| **Движок (симулятор)** | [`engine/`](engine/) | Браузерный симулятор механики по [`docs/game_data_format.md`](docs/game_data_format.md); данные — [`examples/fallout_demo/`](examples/fallout_demo/) |
-| **Примеры** | [`examples/`](examples/) | LVGL Demo + [`fallout_demo/`](examples/fallout_demo/) (статы/рецепты для engine) |
-| **Общий код** | [`common/`](common/) | UI (LVGL), приложение, HAL — для прошивки ESP32 |
-| **Прошивка** | [`firmware/`](firmware/) | ESP32, дисплей ST7789, кнопки, радио (позже) |
+| Компонент              | Путь                     | Роль                                                                                                                                                                |
+| ---------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Редактор**           | [`editor/`](editor/)     | **GameTracker Editor** (форк [IoTSharp/lvgl-editor](https://github.com/IoTSharp/lvgl-editor)): LVGL UI, события, логика, экспорт C, **Simulator** (WASM в браузере) |
+| **Движок (симулятор)** | [`engine/`](engine/)     | Браузерный симулятор механики по [`docs/game_data_format.md`](docs/game_data_format.md)                                                  |
+| **Примеры**            | [`examples/`](examples/) | LVGL Demo + [`fallout_demo/`](examples/fallout_demo/) (статы/рецепты для engine)                                                                                    |
+| **Общий код**          | [`common/`](common/)     | UI (LVGL), приложение, HAL — для прошивки ESP32                                                                                                                     |
+| **Прошивка**           | [`firmware/`](firmware/) | ESP32, дисплей ST7789, кнопки, радио (позже)                                                                                                                        |
 
 Редактор: `cd editor` → `.\gametracker-editor-start.ps1` → http://localhost:8083. Документация — [editor/README.md](editor/README.md).
 
@@ -54,35 +54,6 @@
 | Мишень | BLE | Интерактивная мишень |
 | Оружие | BLE | Связь с игровым оружием |
 
-## Сценарий Demo
-
-**Цель:** без программирования собрать экран и логику в **одном редакторе**, проверить в симуляторе и прошить ESP32.
-
-| Шаг | Действие |
-|-----|----------|
-| 1 | В **редакторе** (`editor/`) — вкладки **Design** и **Logic**: экран + поведение |
-| 2 | **Code** — скачать `ui.c`, `ui_events.c`, `ui_logic.c` → `common/ui/` |
-| 3 | **Simulator** (вкладка в редакторе) — проверка в браузере (тот же C, WASM) |
-| 4 | **Прошивка** — тот же код на устройстве |
-
-Стартовый проект: [examples/gametracker-demo.lvgl.json](examples/gametracker-demo.lvgl.json) (**Import project**).
-
-### Экран (Design)
-
-- **2 image** — `img_alive`, `img_dead` (Vault Boy; переключение по здоровью).
-- **2 label** — `lb_hits` (попадания, старт 0), `lb_heal` (лечение, старт 100).
-- **1 bar** — `pb_health`, шкала 0…100 (`heal - hits`).
-
-Настройки проекта: **240×320**, **RGB565**. Картинки Vault Boy встроены в пример JSON.
-
-### Логика (Logic) — тест симуляции
-
-Таймер **1 с**: `hits++` (0…100), `heal` всегда **100**, **pb_health** = `heal - hits`. При `health > 0` — `img_alive`, иначе `img_dead`. Граф **health_update** в Logic.
-
-### Симулятор и прошивка
-
-Симуляция — вкладка **Simulator** в [`editor/`](editor/) (Emscripten + LVGL в браузере). На ESP32 тот же экспортированный код из `common/ui/` линкуется в [firmware/](firmware/). Кнопки: GPIO 32/33 и 12/14 (см. [firmware/docs/display_bringup.md](firmware/docs/display_bringup.md)).
-
 ## Железо (текущий стенд)
 
 | Параметр | Значение |
@@ -93,10 +64,18 @@
 
 ## Документация
 
-| Тема | Файл |
-|------|------|
-| Редактор (IoTSharp) | [editor/README.md](editor/README.md) |
-| Формат игровых данных + симулятор | [docs/game_data_format.md](docs/game_data_format.md), [engine/README.md](engine/README.md), [examples/fallout_demo/](examples/fallout_demo/) |
-| Пример Demo | [examples/README.md](examples/README.md) |
-| Общий код | [common/README.md](common/README.md) |
-| Дисплей / bring-up | [firmware/docs/display_bringup.md](firmware/docs/display_bringup.md) |
+| Тема                  | Файл                                                                 |
+| --------------------- | -------------------------------------------------------------------- |
+| Формат игровых данных | [docs/game_data_format.md](docs/game_data_format.md)                 |
+| Runtime трекера       | [docs/device_runtime.md](docs/device_runtime.md)                     |
+| Симуляция сценария    | [docs/scenario_simulation.md](docs/scenario_simulation.md)           |
+| LoRa mesh-протокол    | [docs/mesh_protocol.md](docs/mesh_protocol.md)                       |
+| Редактор (IoTSharp)   | [editor/README.md](editor/README.md)                                 |
+| Симулятор (engine)    | [engine/README.md](engine/README.md)                                 |
+| Сценарий Fallout Demo | [examples/fallout_demo/README.md](examples/fallout_demo/README.md)   |
+| Общий код             | [common/README.md](common/README.md)                                 |
+| Запуск дисплея        | [firmware/docs/display_bringup.md](firmware/docs/display_bringup.md) |
+
+## Демо
+
+Демо-сценарий **Fallout** (метки, маячки, зоны, команда мастера по LoRa): текст шагов — [`examples/fallout_demo/README.md`](examples/fallout_demo/README.md). Как устройство должно это исполнять — [`docs/device_runtime.md`](docs/device_runtime.md); как прогнать в engine — [`docs/scenario_simulation.md`](docs/scenario_simulation.md); mesh мастер↔трекер — [`docs/mesh_protocol.md`](docs/mesh_protocol.md).

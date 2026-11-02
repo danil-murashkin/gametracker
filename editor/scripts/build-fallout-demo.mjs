@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build examples/gametracker-demo.lvgl.json from examples/assets/vault_boy_*.jpg
+ * Build examples/fallout_demo/fallout-demo.lvgl.json from examples/fallout_demo/assets/vault_boy_*.jpg
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
-const assetsDir = join(repoRoot, 'examples', 'assets');
-const outDir = join(repoRoot, 'examples');
-const outFile = join(outDir, 'gametracker-demo.lvgl.json');
+const assetsDir = join(repoRoot, 'examples', 'fallout_demo', 'assets');
+const outDir = join(repoRoot, 'examples', 'fallout_demo');
+const outFile = join(outDir, 'fallout-demo.lvgl.json');
 
 const NOW = Date.now();
 
@@ -254,7 +254,7 @@ const logicGraph = {
 
 const project = {
   version: '1.0.0',
-  name: 'GameTracker Demo',
+  name: 'fallout demo',
   createdAt: NOW,
   updatedAt: NOW,
   canvasSize: { width: 240, height: 320 },

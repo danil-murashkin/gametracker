@@ -1,4 +1,4 @@
-# Display bring-up — ST7789 + LVGL
+# Запуск дисплея — ST7789 + LVGL
 
 Минимальная прошивка для WEMOS LOLIN32 Lite + ST7789V-IPS 2.4" (240×320, SPI, без тача).
 
@@ -35,13 +35,13 @@ I (xxx) ui: ui init ok, 240x320
 I (xxx) app_main: ready
 ```
 
-## Pinout (единственное место в коде)
+## Распиновка 
 
 Файл: `main/hal/hal_display_st7789.c`
 
 | Сигнал   | GPIO |
 |----------|------|
-| Backlight | 22  |
+| Подсветка | 22  |
 | RESET    | 16  |
 | DC       | 17  |
 | CS       | 5   |
@@ -93,7 +93,7 @@ esp_lcd_panel_set_gap(panel_handle, 0, 0);
 
 1. **Backlight** — GPIO 22 должен быть HIGH (3.3 V на LED)
 2. **Питание** — VCC дисплея 3.3 V, общий GND с ESP32
-3. **SPI wiring** — MOSI/SCK/CS/DC, не перепутаны
+3. **Распиновка SPI** — MOSI/SCK/CS/DC, не перепутаны
 4. **RESET** — GPIO 16, pulse при init через `esp_lcd_panel_reset()`
 5. **CS** — должен быть подтянут, не «висеть» при старте
 
@@ -104,13 +104,13 @@ esp_lcd_panel_set_gap(panel_handle, 0, 0);
 3. Partial buffer: `240 * 32` px (~15 KB) — не увеличивать без PSRAM
 4. Проверить качество проводов и длину SPI линий
 
-### Reboot loop
+### Цикл перезагрузок
 
 1. Слишком большой draw buffer без PSRAM — уменьшить `DISP_DRAW_BUF_LINES`
 2. Stack overflow LVGL task — увеличить в menuconfig (Component config → LVGL)
 3. Ошибка SPI init — смотреть backtrace в monitor
 
-## Внутренний hardware test (RGB)
+## Внутренняя проверка железа (RGB)
 
 Функция `hal_display_hw_test_rgb(hold_ms)` в `main/hal/hal_display_hw_test.c` — заливка экрана красный → зелёный → синий через `esp_lcd`, без LVGL.
 
@@ -131,9 +131,9 @@ ESP_ERROR_CHECK(hal_display_lvgl_init());
 | Параметр | Значение |
 |----------|----------|
 | Разрешение | 240×320 |
-| Color depth | RGB565 (16 bit) |
-| Partial buffer | 240 × 32 px (~15 KB) |
-| Double buffer | false |
+| Глубина цвета | RGB565 (16 бит) |
+| Частичный буфер | 240 × 32 px (~15 КБ) |
+| Двойной буфер | выключен |
 | PSRAM | не используется |
 
 ## Сборка

@@ -1,5 +1,5 @@
 /**
- * Rebuild Simulator WASM from GameTracker Demo via dev-server /api/compile.
+ * Rebuild Simulator WASM from fallout demo via dev-server /api/compile.
  * Run: npm run rebuild:simulator
  */
 import { readFileSync } from 'node:fs';
@@ -14,12 +14,12 @@ import type { LogicGraph } from '../src/components/LogicEditor/types';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
-const demoPath = resolve(repoRoot, 'examples', 'GameTracker Demo.lvgl.json');
+const demoPath = resolve(repoRoot, 'examples', 'fallout_demo', 'fallout-demo.lvgl.json');
 const PORT = Number(process.env.SIMULATOR_PORT ?? 8083);
 
 describe('rebuild simulator', () => {
   it(
-    'compiles GameTracker Demo with square pb_health outline frame',
+    'compiles fallout demo with square pb_health outline frame',
     async () => {
       const demo = JSON.parse(readFileSync(demoPath, 'utf-8')) as {
         pages: Page[];

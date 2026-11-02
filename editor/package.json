@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest --run",
-    "build:demo": "node scripts/build-gametracker-demo.mjs",
+    "build:demo": "node scripts/build-fallout-demo.mjs",
     "export:logic-counter": "vitest run src/codegen/__tests__/logic-timer-counter.test.ts",
     "export:gametracker-demo": "vitest run scripts/export-gametracker-demo.test.ts",
     "rebuild:simulator": "vitest run scripts/rebuild-simulator.test.ts"

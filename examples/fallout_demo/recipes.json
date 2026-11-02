@@ -6,8 +6,8 @@
       "desc": "Расход еды и воды каждый тик",
       "type": "pasv",
       "stats": [
-        {"stat":"food","val":"-(food_per_cyc)","tick":1,"try":-1,"while":"inact(is_dead)"},
-        {"stat":"water","val":"-(water_per_cyc)","tick":1,"try":-1,"while":"inact(is_dead)"}
+        {"stat":"food","val":"-(hunger)","tick":1,"try":-1,"while":"inact(is_dead)"},
+        {"stat":"water","val":"-(thirst)","tick":1,"try":-1,"while":"inact(is_dead)"}
       ]
     },
     {
@@ -15,6 +15,7 @@
       "desc": "Урон от голода при food<=0",
       "type": "pasv",
       "stats": [
+        {"stat":"exhaustion","val":"=1","tick":1,"try":-1,"while":"food <= 0 and inact(is_dead)"},
         {"stat":"health","val":"-1","tick":1,"try":-1,"while":"food <= 0 and inact(is_dead)"}
       ]
     },
@@ -23,16 +24,59 @@
       "desc": "Урон от жажды при water<=0",
       "type": "pasv",
       "stats": [
+        {"stat":"dehydration","val":"=1","tick":1,"try":-1,"while":"water <= 0 and inact(is_dead)"},
         {"stat":"health","val":"-1","tick":1,"try":-1,"while":"water <= 0 and inact(is_dead)"}
       ]
     },
     {
+      "name": "mech_radiation",
+      "desc": "Острая радиация копится в дозу; с 400 единиц человек становится гулем",
+      "type": "pasv",
+      "stats": [
+        {"stat":"rad_dose","val":"+(rad_now)","tick":1,"try":-1,"while":"rad_now > 0 and inact(is_dead)"},
+        {"stat":"rad_now","val":"=0","tick":1,"try":-1,"while":"rad_now > 0"},
+        {"stat":"race","val":"=1","tick":1,"try":-1,"while":"rad_dose >= 400 and race = 0 and inact(is_dead)"}
+      ]
+    },
+    {
+      "name": "mech_armor",
+      "desc": "Физ. резист брони = armor_phys × прочность / максимум",
+      "type": "pasv",
+      "stat": "phys_resist",
+      "val": "=(armor_phys * armor_state / max_armor)",
+      "tick": 1,
+      "try": -1,
+      "while": "max_armor > 0 and armor_state > 0 and inact(is_dead)"
+    },
+    {
+      "name": "mech_shelter",
+      "desc": "Радиомаяк убежища: пока трекер слышит его не слабее −60 дБм, персонаж защищён",
+      "type": "pasv",
+      "stat": "shelter",
+      "val": "=1",
+      "tick": 1,
+      "try": -1,
+      "while": "radio_rssi >= -60 and inact(is_dead)"
+    },
+    {
+      "name": "mech_death",
+      "desc": "Нулевое здоровье выставляет смерть",
+      "type": "pasv",
+      "stat": "is_dead",
+      "val": "=1",
+      "tick": 1,
+      "try": -1,
+      "while": "health <= 0 and inact(is_dead)"
+    },
+    {
       "name": "stimpak",
-      "desc": "Восстанавливает 50% max_health",
+      "desc": "Половина max_health живому; гулю — пятая часть этой дозы",
       "type": "inst", "uses": 3, "umax": 3,
       "sig": "5b792b6d",
-      "stat": "health",
-      "val": "+(max_health/2)"
+      "stats": [
+        {"stat":"health","val":"+(max_health/2)","if":"not act(is_dead) and race != 1"},
+        {"stat":"health","val":"+(max_health/10)","if":"not act(is_dead) and race = 1"}
+      ]
     },
     {
       "name": "radaway",
@@ -43,16 +87,17 @@
     },
     {
       "name": "addictol",
-      "desc": "Снимает все зависимости",
+      "desc": "Снимает все зависимости и их штрафные таймеры",
       "type": "inst", "uses": 1, "umax": 1,
+      "clear": ["hangover_nuka","addict_buffout","addict_jet","addict_medx","addict_mentats","addict_radx","addict_quantum"],
       "stats": [
-        {"stat":"hangover_nuka","val":"=0"},
-        {"stat":"addict_buffout","val":"=0"},
-        {"stat":"addict_jet","val":"=0"},
-        {"stat":"addict_medx","val":"=0"},
-        {"stat":"addict_mentats","val":"=0"},
-        {"stat":"addict_radx","val":"=0"},
-        {"stat":"addict_quantum","val":"=0"}
+        {"stat":"hangover_nuka","val":"=0","if":"act(hangover_nuka) or act(addict_buffout) or act(addict_jet) or act(addict_medx) or act(addict_mentats) or act(addict_radx) or act(addict_quantum)"},
+        {"stat":"addict_buffout","val":"=0","if":"act(hangover_nuka) or act(addict_buffout) or act(addict_jet) or act(addict_medx) or act(addict_mentats) or act(addict_radx) or act(addict_quantum)"},
+        {"stat":"addict_jet","val":"=0","if":"act(hangover_nuka) or act(addict_buffout) or act(addict_jet) or act(addict_medx) or act(addict_mentats) or act(addict_radx) or act(addict_quantum)"},
+        {"stat":"addict_medx","val":"=0","if":"act(hangover_nuka) or act(addict_buffout) or act(addict_jet) or act(addict_medx) or act(addict_mentats) or act(addict_radx) or act(addict_quantum)"},
+        {"stat":"addict_mentats","val":"=0","if":"act(hangover_nuka) or act(addict_buffout) or act(addict_jet) or act(addict_medx) or act(addict_mentats) or act(addict_radx) or act(addict_quantum)"},
+        {"stat":"addict_radx","val":"=0","if":"act(hangover_nuka) or act(addict_buffout) or act(addict_jet) or act(addict_medx) or act(addict_mentats) or act(addict_radx) or act(addict_quantum)"},
+        {"stat":"addict_quantum","val":"=0","if":"act(hangover_nuka) or act(addict_buffout) or act(addict_jet) or act(addict_medx) or act(addict_mentats) or act(addict_radx) or act(addict_quantum)"}
       ]
     },
     {
@@ -235,8 +280,16 @@
     {
       "name": "bobblehead_strength",
       "desc": "Сила +1 навсегда",
+      "say": "Ты стал сильнее. Сила +1",
       "type": "inst", "uses": 1, "umax": 1,
       "stat": "strength",
+      "val": "+1"
+    },
+    {
+      "name": "bobblehead_perception",
+      "desc": "Восприятие +1 навсегда",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stat": "perception",
       "val": "+1"
     },
     {
@@ -256,15 +309,133 @@
       "try": 10800
     },
     {
+      "name": "repair_armor",
+      "desc": "Спросить, что чинить, и восстановить выбранное до максимума",
+      "prompt": "Есть 5 зарядов, что починить?",
+      "type": "inst", "uses": 5, "umax": 5,
+      "stats": [
+        {"stat":"armor_state","val":"=(max_armor)","choice":"armor","if":"not act(is_dead)"},
+        {"stat":"weapon_state","val":"=(max_weapon)","choice":"weapon","if":"not act(is_dead)"}
+      ]
+    },
+    {
+      "name": "armor_power",
+      "desc": "Силовая броня, только при силе >= 8",
+      "fail": "Не вышло. Ты слабый. Нужна сила 8",
+      "type": "pasv", "uses": 2, "umax": 2,
+      "stats": [
+        {"stat":"armor_rad","val":"=10","if":"strength + mod_strength >= 8"},
+        {"stat":"armor_phys","val":"=6","if":"strength + mod_strength >= 8"},
+        {"stat":"armor_chem","val":"=5","if":"strength + mod_strength >= 8"},
+        {"stat":"max_armor","val":"=400","if":"strength + mod_strength >= 8"},
+        {"stat":"armor_state","val":"=400","if":"strength + mod_strength >= 8"}
+      ]
+    },
+    {
+      "name": "laser_shot",
+      "desc": "Лазер: маячок рядом не слабее −35 дБм и перк инженера",
+      "fail": "Не вышло, ты не Инженер",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stat": "ammo",
+      "val": "-1",
+      "if": "perk = 5 and ble_rssi >= -35 and not act(is_dead)"
+    },
+    {
+      "name": "sense_anomaly",
+      "desc": "Предчувствие аномалии, только живому при восприятии от 5",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stat": "anomaly_seen",
+      "val": "=1",
+      "if": "not act(is_dead) and perception + mod_perception >= 5"
+    },
+    {
+      "name": "rad_field",
+      "desc": "Радиационное поле: живой замечает его и получает 100 острой радиации",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stats": [
+        {"stat":"rad_seen","val":"=1","if":"not act(is_dead) and perception + mod_perception >= 5"},
+        {"stat":"rad_now","val":"+100","if":"not act(is_dead)"}
+      ]
+    },
+    {
+      "name": "sense_monsters",
+      "desc": "Порог −70 дБм сдвигается на восприятие: при 5 это −75. Ближний −74 виден, дальний −80 нет",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stats": [
+        {"stat":"monsters_seen","val":"=0","if":"not act(is_dead)"},
+        {"stat":"monsters_seen","val":"+1","if":"not act(is_dead) and -74 + perception + mod_perception >= -70"},
+        {"stat":"monsters_seen","val":"+1","if":"not act(is_dead) and -80 + perception + mod_perception >= -70"},
+        {"stat":"phy_flag","val":"=1","if":"not act(is_dead) and (-74 + perception + mod_perception >= -70 or -80 + perception + mod_perception >= -70)"}
+      ]
+    },
+    {
+      "name": "pistol_shot",
+      "desc": "Свой выстрел: патрон −1, пока жив и ammo > 0",
+      "type": "inst", "uses": 6, "umax": 6,
+      "stat": "ammo",
+      "val": "-1",
+      "if": "ammo > 0 and not act(is_dead)"
+    },
+    {
+      "name": "enemy_shot",
+      "desc": "Чужая пуля: лёгкая броня теряет 25 прочности и не спасает жизнь",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"armor_state","val":"-25","if":"armor_state > 0 and not act(is_dead)"},
+        {"stat":"health","val":"=0","if":"not act(is_dead)"},
+        {"stat":"is_dead","val":"=1","if":"not act(is_dead)"}
+      ]
+    },
+    {
+      "name": "anomaly_phys",
+      "desc": "Физ. аномалия 40: урон минус защита, броня теряет поглощённое",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stats": [
+        {"stat":"hit_landed","val":"=0"},
+        {"stat":"hit_landed","val":"=1","if":"not act(is_dead) and inact(shelter) and rnd(2,21) > agility + mod_agility + luck + mod_luck"},
+        {"stat":"health","val":"-(40 - phys_resist)","if":"act(hit_landed) and inact(shelter) and phys_resist < 40"},
+        {"stat":"armor_state","val":"-(phys_resist)","if":"act(hit_landed) and inact(shelter) and phys_resist > 0"}
+      ]
+    },
+    {
+      "name": "phys_blow",
+      "desc": "Физ. удар 999",
+      "say": "У Вас Инсульт. Вы умерли! Нам очень жаль :(",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"health","val":"=0","if":"not act(is_dead)"},
+        {"stat":"is_dead","val":"=1","if":"not act(is_dead)"}
+      ]
+    },
+    {
+      "name": "anomaly_blast",
+      "desc": "Полевая аномалия сводит здоровье в ноль и убивает",
+      "type": "inst", "uses": 1, "umax": 1,
+      "stats": [
+        {"stat":"health","val":"=0","if":"not act(is_dead)"},
+        {"stat":"is_dead","val":"=1","if":"not act(is_dead)"}
+      ]
+    },
+    {
+      "name": "experiment_rnd",
+      "desc": "Лечение rnd(3,10), coef 2 удваивает сумму",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stat": "health",
+      "val": "+rnd(3,10)",
+      "coef": 2,
+      "if": "not act(is_dead)"
+    },
+    {
       "name": "armor_light_phys",
-      "desc": "Лёгкая броня: физ резист 4",
+      "desc": "Лёгкая броня: маячок не слабее −35 дБм и кнопка",
+      "say": "Лёгкая броня одета",
       "type": "pasv", "uses": 1, "umax": 1,
       "stats": [
-        {"stat":"armor_rad","val":"=0"},
-        {"stat":"armor_phys","val":"=4"},
-        {"stat":"armor_chem","val":"=0"},
-        {"stat":"max_armor","val":"=250"},
-        {"stat":"armor_state","val":"=250"}
+        {"stat":"armor_rad","val":"=0","if":"ble_rssi >= -35 and not act(is_dead)"},
+        {"stat":"armor_phys","val":"=4","if":"ble_rssi >= -35 and not act(is_dead)"},
+        {"stat":"armor_chem","val":"=0","if":"ble_rssi >= -35 and not act(is_dead)"},
+        {"stat":"max_armor","val":"=250","if":"ble_rssi >= -35 and not act(is_dead)"},
+        {"stat":"armor_state","val":"=250","if":"ble_rssi >= -35 and not act(is_dead)"}
       ]
     },
     {
@@ -277,6 +448,30 @@
         {"stat":"armor_phys","val":"=2"},
         {"stat":"mod_strength","val":"+1","tick":1,"try":300}
       ]
+    },
+    {
+      "name": "gps_zone",
+      "desc": "GPS-зона: знак радиации и +100 к острой дозе, если нет убежища",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stats": [
+        {"stat":"in_rad_zone","val":"=1"},
+        {"stat":"rad_seen","val":"=1","if":"not act(is_dead) and inact(shelter)"},
+        {"stat":"rad_now","val":"+100","if":"not act(is_dead) and inact(shelter)"}
+      ]
+    },
+    {
+      "name": "shelter_near",
+      "desc": "Трекер слышит радиомаяк убежища на −60 дБм",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stat": "radio_rssi",
+      "val": "=-60"
+    },
+    {
+      "name": "shelter_far",
+      "desc": "Трекер слышит радиомаяк убежища на −80 дБм",
+      "type": "inst", "uses": 3, "umax": 3,
+      "stat": "radio_rssi",
+      "val": "=-80"
     }
   ]
 }

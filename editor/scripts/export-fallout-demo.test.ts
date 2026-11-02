@@ -1,6 +1,6 @@
 /**
- * Export GameTracker Demo generated C to common/ui_generated/ for firmware.
- * Run: npm run export:gametracker-demo
+ * Export fallout demo generated C to common/ui_generated/ for firmware.
+ * Run: npm run export:fallout-demo
  * @vitest-environment node
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -21,9 +21,9 @@ import type { CodeGenOptions } from '../src/codegen/types';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..', '..');
-const demoPath = join(repoRoot, 'examples', 'GameTracker Demo.lvgl.json');
+const demoPath = join(repoRoot, 'examples', 'fallout_demo', 'fallout-demo.lvgl.json');
 const lvglTargetPath = join(repoRoot, 'common', 'lvgl-target.json');
-const assetsDir = join(repoRoot, 'examples', 'assets');
+const assetsDir = join(repoRoot, 'examples', 'fallout_demo', 'assets');
 const exportDir = join(repoRoot, 'common', 'ui_generated');
 
 function loadImageAsImageData(filePath: string): ImageData {

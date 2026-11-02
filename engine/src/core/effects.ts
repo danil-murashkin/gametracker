@@ -90,6 +90,7 @@ export function createActiveEffect(
     try_left: tryCount,
     coef: effect.coef ?? 1,
     while: effect.while,
+    if: effect.if,
   };
 }
 
@@ -110,38 +111,47 @@ export function fireEffect(
  * Один тик жизненного цикла эффекта.
  * Возвращает false, если эффект нужно снять.
  */
-export function advanceEffect(
-  effect: ActiveEffect,
-  stats: StatInstance[],
-  statDefs: Map<string, StatDef>,
-  ctx: ExprContext,
-): boolean {
-  if (effect.delay_left > 0) {
-    effect.delay_left -= 1;
-    return true;
-  }
-
-  const interval = effect.tick > 0 ? effect.tick : 1;
-  effect.tick_acc += 1;
-
-  if (effect.tick_acc < interval) {
-    return true;
-  }
-  effect.tick_acc = 0;
-
-  // while ложно → этот тик не действует, но таймер try всё равно идёт
-  if (!effect.while || evaluateCondition(effect.while, ctx)) {
-    fireEffect(effect, stats, statDefs, ctx);
-  }
-
+function consumeTry(effect: ActiveEffect): boolean {
   if (effect.try_left > 0) {
     effect.try_left -= 1;
     if (effect.try_left === 0) {
       return false;
     }
   }
-
   return true;
+}
+
+export function advanceEffect(
+  effect: ActiveEffect,
+  stats: StatInstance[],
+  statDefs: Map<string, StatDef>,
+  ctx: ExprContext,
+): { keep: boolean; fired: boolean } {
+  if (effect.delay_left > 0) {
+    effect.delay_left -= 1;
+    return { keep: true, fired: false };
+  }
+
+  const interval = effect.tick > 0 ? effect.tick : 1;
+  effect.tick_acc += 1;
+
+  if (effect.tick_acc < interval) {
+    return { keep: true, fired: false };
+  }
+  effect.tick_acc = 0;
+
+  if (effect.if && !evaluateCondition(effect.if, ctx)) {
+    return { keep: consumeTry(effect), fired: false };
+  }
+
+  // while ложно → этот тик не действует, но таймер try всё равно идёт
+  let fired = false;
+  if (!effect.while || evaluateCondition(effect.while, ctx)) {
+    fireEffect(effect, stats, statDefs, ctx);
+    fired = true;
+  }
+
+  return { keep: consumeTry(effect), fired };
 }
 
 /** mod_* и *\_resist каждый тик сбрасываются к def (как MLP[8..14]/[21..23] в FT3). */

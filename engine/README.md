@@ -2,7 +2,7 @@
 
 Браузерный симулятор игровой механики по спецификации [`docs/game_data_format.md`](../docs/game_data_format.md).
 
-Данные сценария **не вшиты в движок** — берутся из [`examples/fallout_demo/`](../examples/fallout_demo/) (препараты по [`docs/old_system/preparates.md`](../docs/old_system/preparates.md)).
+Данные сценария **не вшиты в движок** — берутся из [`examples/fallout_demo/`](../examples/fallout_demo/).
 
 Реализовано:
 

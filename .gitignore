@@ -2,4 +2,4 @@
 examples/generated/
 node_modules/
 dist/
-.git_user
+.git-user

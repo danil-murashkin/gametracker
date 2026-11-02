@@ -21,6 +21,8 @@ export interface EffectDef {
   try?: number;
   if?: string;
   while?: string;
+  /** Какой ответ на вопрос рецепта включает это воздействие. */
+  choice?: string;
 }
 
 export interface RecipeDef {
@@ -42,6 +44,14 @@ export interface RecipeDef {
   while?: string;
   /** Несколько воздействий. */
   stats?: EffectDef[];
+  /** Маркеры, чьи штрафные таймеры (`while act(маркер)`) снимаются при применении. */
+  clear?: string[];
+  /** Текст отказа живого персонажа. Без поля — «Не вышло». */
+  fail?: string;
+  /** Строка на экран, когда рецепт сработал. */
+  say?: string;
+  /** Вопрос перед применением. Без choice использование не тратится. */
+  prompt?: string;
 }
 
 /** Каталог рецептов сценария (не инвентарь персонажа). */
@@ -75,6 +85,11 @@ export interface ActiveEffect {
   try_left: number;
   coef: number;
   while?: string;
+  if?: string;
+  /** Маркеры, чьи штрафные таймеры снимаются, когда этот эффект сработал. */
+  clear?: string[];
+  /** Таймер уже обнулён: строка эффекта снимается со следующего тика. */
+  retire?: boolean;
 }
 
 /** Персонаж: статы (схема + val) и инвентарь в одном документе. */

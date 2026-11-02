@@ -56,8 +56,8 @@ describe('logicRuntime debug stepping', () => {
     expect(runtimeState.variables.counter).toBe(1);
   });
 
-  it('gametracker demo health_update tick sets bar and image flags', () => {
-    const project = JSON.parse(readFileSync(join(repoRoot, 'examples', 'gametracker-demo.lvgl.json'), 'utf8'));
+  it('fallout demo health_update tick sets bar and image flags', () => {
+    const project = JSON.parse(readFileSync(join(repoRoot, 'examples', 'fallout_demo', 'fallout-demo.lvgl.json'), 'utf8'));
     const graph = project.logicGraphs.find((g: LogicGraph) => g.name === 'health_update') as LogicGraph;
     const runtimeState = createLogicRuntimeState([graph]);
     const timer = graph.nodes.find(n => n.subType === 'timer_trigger')!;
